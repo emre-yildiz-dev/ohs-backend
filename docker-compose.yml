@@ -42,18 +42,21 @@ services:
     volumes:
       - ./coturn/turnserver.conf:/etc/coturn/turnserver.conf:ro
     # Expose UDP and TCP ports for TURN/STUN
-    # Ensure these ports are also open on your host firewall
     ports:
       - "3478:3478/tcp"
       - "3478:3478/udp"
-      # Example relay ports, adjust as per your turnserver.conf
+      - "5349:5349/tcp"
+      - "5349:5349/udp"
       - "49152-49200:49152-49200/udp"
-    # The command depends on your turnserver.conf.
-    # This is a basic example, you might need to adjust it.
-    # command: -c /etc/coturn/turnserver.conf -L 0.0.0.0
+    command: -c /etc/coturn/turnserver.conf -v
+    healthcheck:
+      test: ["CMD-SHELL", "apt-get update && apt-get install -y net-tools && netstat -tulpn | grep -q 3478 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     networks:
       - ohs_network
-    # Add healthcheck if coturn image supports it or use a custom script
 
   ohs-backend:
     build:
@@ -69,9 +72,11 @@ services:
       redis:
         condition: service_healthy
       garage:
-        condition: service_started # Garage might not have a simple healthcheck
+        condition: service_healthy
+      garage-init:
+        condition: service_completed_successfully
       coturn:
-        condition: service_started # Coturn might not have a simple healthcheck
+        condition: service_healthy
     environment:
       # Add any environment variables your Axum app needs
       DATABASE_URL: postgresql://user:password@postgres:5432/ohs_db
@@ -80,15 +85,15 @@ services:
       S3_ACCESS_KEY_ID: garage-access-key
       S3_SECRET_ACCESS_KEY: garage-secret-key
       S3_BUCKET_NAME: ohs-bucket
-      # TURN_URL_UDP: turn:coturn_ip_or_domain:3478?transport=udp
-      # TURN_URL_TCP: turn:coturn_ip_or_domain:3478?transport=tcp
-      # TURN_USERNAME: turn_user
-      # TURN_PASSWORD: turn_password
+      TURN_URL_UDP: turn:coturn:3478?transport=udp
+      TURN_URL_TCP: turn:coturn:3478?transport=tcp
+      TURN_USERNAME: turnuser
+      TURN_PASSWORD: turnpassword
     networks:
       - ohs_network
 
   garage:
-    image: dxflrs/garage:latest
+    image: dxflrs/garage:v1.1.0
     container_name: ohs_garage_s3
     restart: unless-stopped
     ports:
@@ -97,20 +102,31 @@ services:
       - "3902:3902" # Cluster internal Raft port
     volumes:
       - ./garage-data:/var/lib/garage
-      # You'll need to configure Garage. This typically involves a config file.
-      # - ./garage/garage.toml:/etc/garage.toml:ro
+      - ./garage-config/garage.toml:/etc/garage.toml
+    entrypoint: ["/garage", "server"]
     environment:
-      # Garage configuration can be complex and often uses a config file.
-      # These are example environment variables, refer to Garage documentation.
-      GARAGE_S3_ACCESS_KEY_ID: garage-access-key
-      GARAGE_S3_SECRET_ACCESS_KEY: garage-secret-key
-      # GARAGE_META_NODES: "garage:3902" # Example for single node, adjust for cluster
-      # GARAGE_DATA_NODES: "garage:3901" # Example for single node, adjust for cluster
-      # GARAGE_RPC_BIND_ADDR: "0.0.0.0:3901"
-      # GARAGE_RAFT_BIND_ADDR: "0.0.0.0:3902"
-      # GARAGE_S3_BIND_ADDR: "0.0.0.0:3900"
-      # GARAGE_S3_PUBLIC_HOSTNAME: "localhost:3900" # Or your domain
-    # command: garage server -c /etc/garage.toml # If using a config file
+      # These are used for initializing the S3 credentials
+      INITIAL_S3_ACCESS_KEY_ID: garage-access-key
+      INITIAL_S3_SECRET_ACCESS_KEY: garage-secret-key
+    healthcheck:
+      test: ["CMD", "/garage", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ohs_network
+
+  garage-init:
+    image: dxflrs/garage:v1.1.0
+    container_name: ohs_garage_init
+    depends_on:
+      garage:
+        condition: service_healthy
+    volumes:
+      - ./init-garage.sh:/init-garage.sh
+      - ./garage-data:/var/lib/garage
+      - ./garage-config/garage.toml:/etc/garage.toml
+    entrypoint: ["/bin/bash", "/init-garage.sh"]
     networks:
       - ohs_network
 
@@ -118,7 +134,6 @@ volumes:
   postgres-data:
   redis-data:
   garage-data:
-  # coturn-config: # If you prefer named volume for coturn config
 
 networks:
   ohs_network:

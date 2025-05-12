@@ -1,0 +1,38 @@
+# Garage Configuration File
+
+# Metadata and data directory
+metadata_dir = "/var/lib/garage/meta"
+data_dir = "/var/lib/garage/data"
+
+# Server configuration
+[server]
+# API endpoints
+s3_api = { bind_addr = "0.0.0.0:3900" }
+s3_region = "us-east-1"
+admin_api = { bind_addr = "0.0.0.0:3903" }
+
+# Network configuration for a single-node cluster
+# In production, you would configure multiple nodes
+[rpc]
+bind_addr = "0.0.0.0:3901"
+advertise_addr = "garage:3901"
+
+[consul_discovery]
+enabled = false
+consul_http_addr = "http://localhost:8500"
+
+# Initial meta/data node
+# This is a single-node configuration
+[cluster_layout]
+datacenter_count = 1
+node_count = 1
+zones_per_datacenter = 1
+
+[replication]
+# Single node, so we don't need replication
+# For production, set higher values
+mode = "none"
+
+[compression]
+# Algorithm used to compress data
+algorithm = "zstd" 

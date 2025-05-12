@@ -1,4 +1,18 @@
-# === Builder Stage ===
+FROM node:20-slim AS css-builder
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package.json pnpm-lock.yaml* ./
+COPY static ./static
+COPY tailwind.config.js* postcss.config.js* ./
+
+# Install pnpm and dependencies
+RUN npm install -g pnpm && \
+    pnpm install && \
+    pnpm run build:css
+
 FROM rust:1.86.0-slim-bookworm AS builder
 
 # Create a new empty shell project
@@ -13,24 +27,24 @@ WORKDIR /usr/src/app/ohs-backend
 COPY Cargo.lock Cargo.toml ./
 
 # Build only the dependencies to cache them
-RUN --mount=type=cache,target=/usr/local/cargo/registry \
-    --mount=type=cache,target=/usr/src/app/ohs-backend/target \
-    cargo build --release && \
+RUN cargo build --release && \
     rm src/*.rs
 
-# Copy the source code
+# Copy the source code and templates
 COPY src ./src
+COPY templates ./templates
+
+# Copy the compiled CSS from the css-builder stage
+COPY --from=css-builder /app/static/css/main.css ./static/css/
 
 # Build for release
-RUN --mount=type=cache,target=/usr/local/cargo/registry \
-    --mount=type=cache,target=/usr/src/app/ohs-backend/target \
-    cargo build --release
+RUN cargo build --release
 
 # === Runtime Stage ===
-FROM debian:bookworm-stable-slim
+FROM debian:bookworm-slim
 
 # Runtime dependencies
-RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y ca-certificates curl && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user
 RUN groupadd -r app && useradd -r -g app app
@@ -39,9 +53,13 @@ WORKDIR /app
 
 # Copy the binary from builder stage
 COPY --from=builder /usr/src/app/ohs-backend/target/release/ohs-backend /app/ohs-backend
+# Copy templates to runtime image
+COPY --from=builder /usr/src/app/ohs-backend/templates /app/templates
+# Copy static files including compiled CSS
+COPY --from=builder /usr/src/app/ohs-backend/static /app/static
 
 # Set ownership
-RUN chown app:app /app/ohs-backend
+RUN chown -R app:app /app
 USER app
 
 # Application metadata
