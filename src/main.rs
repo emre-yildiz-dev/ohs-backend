@@ -6,6 +6,7 @@ use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod modules;
+mod config;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -19,25 +20,23 @@ async fn main() -> anyhow::Result<()> {
 
     dotenv().ok();
 
+    let config = config::init()?;
+
     // HTMX Router
     let htmx_app = Router::new()
         .route("/", get(admin_dashboard))
         .route("/login", get(admin_login));
 
-    let assets_path = std::env::current_dir().unwrap();
+    let static_dir = format!("{}", config.app.static_dir);
 
     let app = Router::new()
         .route("/", get(hello))
         .nest("/admin", htmx_app)
-        .nest_service("/static", tower_http::services::ServeDir::new(format!("{}/static", assets_path.to_str().unwrap())));
+        .nest_service("/static", tower_http::services::ServeDir::new(static_dir));
 
-    let port = 8000_u16;
-    let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
+    let addr = config.server_addr();
 
-    let app_name = std::env::var("CARGO_CRATE_NAME")
-        .unwrap_or_default()
-        .to_string();
-    info!("{} Listening on {}", app_name, addr);
+    info!("{} Listening on http://{}", config.app.name, addr);
 
     let listener = tokio::net::TcpListener::bind(addr)
         .await

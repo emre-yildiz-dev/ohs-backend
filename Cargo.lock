@@ -447,6 +447,8 @@ dependencies = [
  "askama",
  "axum",
  "dotenv",
+ "once_cell",
+ "serde",
  "tokio",
  "tower-http",
  "tracing",
