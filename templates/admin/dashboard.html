@@ -1,0 +1,93 @@
+{% extends "base.html" %} {% block title %}Admin Dashboard - OHS App{% endblock
+%} {% block content %}
+<div class="container mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold mb-6 text-gray-800">Admin Dashboard</h1>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <!-- Companies Management Card -->
+    <div class="bg-white shadow-lg rounded-lg p-6">
+      <h2 class="text-xl font-semibold mb-4 text-gray-700">Manage Companies</h2>
+      <p class="text-gray-600 mb-4">Oversee and manage client companies.</p>
+      <a href="#" class="text-blue-500 hover:text-blue-700 font-medium"
+        >View Companies &rarr;</a
+      >
+    </div>
+
+    <!-- User Management Card -->
+    <div class="bg-white shadow-lg rounded-lg p-6">
+      <h2 class="text-xl font-semibold mb-4 text-gray-700">Manage Users</h2>
+      <p class="text-gray-600 mb-4">
+        Administer OHS Specialists, Doctors, and Employees.
+      </p>
+      <div class="space-y-2">
+        <a href="#" class="block text-blue-500 hover:text-blue-700 font-medium"
+          >View OHS Specialists &rarr;</a
+        >
+        <a href="#" class="block text-blue-500 hover:text-blue-700 font-medium"
+          >View Doctors &rarr;</a
+        >
+        <a href="#" class="block text-blue-500 hover:text-blue-700 font-medium"
+          >View Employees &rarr;</a
+        >
+      </div>
+    </div>
+
+    <!-- Training Management Card -->
+    <div class="bg-white shadow-lg rounded-lg p-6">
+      <h2 class="text-xl font-semibold mb-4 text-gray-700">Training Modules</h2>
+      <p class="text-gray-600 mb-4">Manage training materials and sessions.</p>
+      <a href="#" class="text-blue-500 hover:text-blue-700 font-medium"
+        >Manage Trainings &rarr;</a
+      >
+    </div>
+
+    <!-- Appointments Overview Card -->
+    <div class="bg-white shadow-lg rounded-lg p-6">
+      <h2 class="text-xl font-semibold mb-4 text-gray-700">Appointments</h2>
+      <p class="text-gray-600 mb-4">View and manage scheduled appointments.</p>
+      <a href="#" class="text-blue-500 hover:text-blue-700 font-medium"
+        >View Appointments &rarr;</a
+      >
+    </div>
+
+    <!-- System Analytics Card -->
+    <div class="bg-white shadow-lg rounded-lg p-6">
+      <h2 class="text-xl font-semibold mb-4 text-gray-700">System Analytics</h2>
+      <p class="text-gray-600 mb-4">
+        Monitor application usage and performance.
+      </p>
+      <a href="#" class="text-blue-500 hover:text-blue-700 font-medium"
+        >View Analytics &rarr;</a
+      >
+    </div>
+
+    <!-- Settings Card -->
+    <div class="bg-white shadow-lg rounded-lg p-6">
+      <h2 class="text-xl font-semibold mb-4 text-gray-700">
+        Application Settings
+      </h2>
+      <p class="text-gray-600 mb-4">Configure general application settings.</p>
+      <a href="#" class="text-blue-500 hover:text-blue-700 font-medium"
+        >Go to Settings &rarr;</a
+      >
+    </div>
+  </div>
+
+  <!-- Placeholder for future charts or more detailed stats -->
+  <div class="mt-10 bg-white shadow-lg rounded-lg p-6">
+    <h2 class="text-xl font-semibold mb-4 text-gray-700">
+      Recent Activity (Placeholder)
+    </h2>
+    <p class="text-gray-600">
+      This section can display recent user registrations, appointment bookings,
+      or system alerts.
+    </p>
+    <!-- Example: A simple list -->
+    <ul class="list-disc list-inside mt-4 text-gray-600">
+      <li>New employee registered: John Doe</li>
+      <li>Appointment booked: Dr. Smith with Jane P.</li>
+      <li>New training material uploaded: "Emergency Evacuation Procedures"</li>
+    </ul>
+  </div>
+</div>
+{% endblock %}

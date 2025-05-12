@@ -1,0 +1,63 @@
+{% extends "public/layout.html" %} {% block title %}Login | OHS Management System{%
+endblock %} {% block main_content %}
+<div class="min-h-[90vh] flex items-center justify-center bg-gray-100 px-4">
+  <div class="bg-white shadow-xl rounded-2xl p-8 max-w-md w-full space-y-6">
+    <div class="text-center">
+      <img src="/static/logo.png" alt="Logo" class="mx-auto h-12 w-12" />
+      <h2 class="mt-4 text-3xl font-bold text-gray-900">Welcome Back</h2>
+      <p class="mt-1 text-sm text-gray-600">Sign in to your account</p>
+    </div>
+    <form action="/login" method="post" class="space-y-5">
+      <div>
+        <label for="email" class="block text-sm font-medium text-gray-700"
+          >Email address</label
+        >
+        <input
+          type="email"
+          name="email"
+          id="email"
+          required
+          class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
+        />
+      </div>
+      <div>
+        <label for="password" class="block text-sm font-medium text-gray-700"
+          >Password</label
+        >
+        <input
+          type="password"
+          name="password"
+          id="password"
+          required
+          class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
+        />
+      </div>
+      <div class="flex items-center justify-between">
+        <label class="flex items-center text-sm text-gray-600">
+          <input
+            type="checkbox"
+            name="remember"
+            class="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
+          />
+          <span class="ml-2">Remember me</span>
+        </label>
+        <a href="/forgot-password" class="text-sm text-teal-600 hover:underline"
+          >Forgot password?</a
+        >
+      </div>
+      <div>
+        <button
+          type="submit"
+          class="w-full flex justify-center py-2 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+        >
+          Sign in
+        </button>
+      </div>
+    </form>
+    <p class="text-sm text-center text-gray-500">
+      Don't have an account?
+      <a href="/register" class="text-teal-600 hover:underline">Sign up</a>
+    </p>
+  </div>
+</div>
+{% endblock %}
