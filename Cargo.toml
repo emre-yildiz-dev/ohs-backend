@@ -1,0 +1,6 @@
+[package]
+name = "ohs-backend"
+version = "0.1.0"
+edition = "2024"
+authors = ["Emre YILDIZ <emre.yildiz.dev@hotmail.com"]
+description = "Multi-tenant Occupational Health and Safety Backend Application"
