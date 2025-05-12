@@ -1,7 +1,9 @@
 use anyhow::Context;
-use axum::{Router, routing::get};
+use app_state::AppState;
+use axum::{Router, routing::get, Json};
 use dotenv::dotenv;
 use modules::admin::handlers::{admin_dashboard, admin_login};
+use serde_json::json;
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use tokio::sync::broadcast;
@@ -11,6 +13,9 @@ use websocket::ws_handler;
 mod modules;
 mod config;
 mod websocket;
+mod app_state;
+mod db;
+mod error;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -25,13 +30,20 @@ async fn main() -> anyhow::Result<()> {
     dotenv().ok();
 
     let config = config::init()?;
+    
+    // Initialize database connection pool
+    let db_pool = db::init_pool().await?;
+    info!("Database connection established");
 
     let (tx, _rx) = broadcast::channel(100);
-    let state = Arc::new(Mutex::new(tx));
+    let ws_state = Arc::new(Mutex::new(tx));
+
+    // Create app state with DB pool
+    let state = AppState::new(db_pool, ws_state.clone());
 
     let ws_app = Router::new()
         .route("/ws", get(ws_handler))
-        .with_state(state);
+        .with_state(ws_state);
 
     // HTMX Router
     let htmx_app = Router::new()
@@ -42,9 +54,11 @@ async fn main() -> anyhow::Result<()> {
 
     let app = Router::new()
         .route("/", get(hello))
+        .route("/health", get(health_check))
         .merge(ws_app)
         .nest("/admin", htmx_app)
-        .nest_service("/static", tower_http::services::ServeDir::new(static_dir));
+        .nest_service("/static", tower_http::services::ServeDir::new(static_dir))
+        .with_state(state);
 
     let addr = config.server_addr();
 
@@ -63,4 +77,27 @@ async fn main() -> anyhow::Result<()> {
 
 async fn hello() -> &'static str {
     "OHS Backend says hello!\n"
+}
+
+async fn health_check(
+    axum::extract::State(state): axum::extract::State<AppState>
+) -> Json<serde_json::Value> {
+    let db_result = sqlx::query("SELECT 1").execute(&state.db).await;
+    
+    let db_status = match db_result {
+        Ok(_) => "healthy",
+        Err(e) => {
+            info!("Database health check failed: {}", e);
+            "unhealthy"
+        }
+    };
+    
+    Json(json!({
+        "status": "ok",
+        "version": env!("CARGO_PKG_VERSION"),
+        "timestamp": chrono::Utc::now().to_rfc3339(),
+        "services": {
+            "database": db_status
+        }
+    }))
 }
