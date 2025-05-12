@@ -1,7 +1,7 @@
 use anyhow::Context;
 use app_state::AppState;
 use axum::{Router, routing::get, Json};
-use dotenv::dotenv;
+use dotenvy::dotenv;
 use modules::admin::handlers::{admin_dashboard, admin_login};
 use serde_json::json;
 use tracing::info;
@@ -19,6 +19,8 @@ mod error;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    dotenv().ok();
+
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
@@ -26,8 +28,6 @@ async fn main() -> anyhow::Result<()> {
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
-
-    dotenv().ok();
 
     let config = config::init()?;
     
@@ -94,8 +94,8 @@ async fn health_check(
     
     Json(json!({
         "status": "ok",
-        "version": env!("CARGO_PKG_VERSION"),
         "timestamp": chrono::Utc::now().to_rfc3339(),
+        "version": env!("CARGO_PKG_VERSION"),
         "services": {
             "database": db_status
         }

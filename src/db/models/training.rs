@@ -64,6 +64,7 @@ pub struct TrainingParticipant {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct NewTraining {
     #[validate(length(min = 1))]
     pub title: String,
@@ -78,6 +79,7 @@ pub struct NewTraining {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct UpdateTraining {
     pub title: Option<String>,
     pub description: Option<String>,
@@ -90,12 +92,14 @@ pub struct UpdateTraining {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct NewTrainingParticipant {
     pub training_id: Uuid,
     pub user_id: Uuid,
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct UpdateParticipantStatus {
     pub status: ParticipantStatus,
     pub joined_at: Option<OffsetDateTime>,

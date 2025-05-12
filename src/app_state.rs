@@ -3,6 +3,7 @@ use sqlx::PgPool;
 use tokio::sync::broadcast;
 
 #[derive(Clone)]
+#[allow(unused)]
 pub struct AppState {
     pub db: PgPool,
     pub ws_tx: Arc<Mutex<broadcast::Sender<String>>>,

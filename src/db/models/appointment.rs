@@ -38,6 +38,7 @@ pub struct Appointment {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct NewAppointment {
     pub employee_id: Uuid,
     pub specialist_id: Uuid,
@@ -48,6 +49,7 @@ pub struct NewAppointment {
     pub notes: Option<String>,
 }
 
+#[allow(unused)]
 impl NewAppointment {
     pub fn end_time(&self) -> OffsetDateTime {
         self.start_time + Duration::minutes(self.duration_minutes)
@@ -55,6 +57,7 @@ impl NewAppointment {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct UpdateAppointment {
     pub status: Option<AppointmentStatus>,
     pub start_time: Option<OffsetDateTime>,

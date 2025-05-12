@@ -52,6 +52,7 @@ pub struct ReportComment {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct NewSafetyReport {
     #[validate(length(min = 1))]
     pub title: String,
@@ -66,6 +67,7 @@ pub struct NewSafetyReport {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct UpdateSafetyReport {
     pub title: Option<String>,
     pub description: Option<String>,
@@ -79,6 +81,7 @@ pub struct UpdateSafetyReport {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct NewReportComment {
     pub report_id: Uuid,
     pub user_id: Option<Uuid>,  // None if anonymous

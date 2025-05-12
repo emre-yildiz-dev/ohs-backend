@@ -13,4 +13,7 @@ redis-data
 # Postgres
 postgres-data
 
+# Sqlx
+.sqlx
+
 

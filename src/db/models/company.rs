@@ -29,6 +29,7 @@ pub struct Company {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct NewCompany {
     #[validate(length(min = 1))]
     pub name: String,
@@ -42,6 +43,7 @@ pub struct NewCompany {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct UpdateCompany {
     pub name: Option<String>,
     pub status: Option<CompanyStatus>,

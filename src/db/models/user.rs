@@ -24,6 +24,7 @@ pub enum UserStatus {
 }
 
 #[derive(Debug, Clone, sqlx::FromRow, Serialize, Deserialize)]
+#[allow(unused)]
 pub struct User {
     pub id: Uuid,
     pub email: String,
@@ -44,6 +45,7 @@ pub struct User {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct NewUser {
     #[validate(email)]
     pub email: String,
@@ -60,6 +62,7 @@ pub struct NewUser {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct UpdateUser {
     pub first_name: Option<String>,
     pub last_name: Option<String>,
@@ -72,6 +75,7 @@ pub struct UpdateUser {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct UserLogin {
     #[validate(email)]
     pub email: String,

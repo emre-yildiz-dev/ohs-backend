@@ -4,6 +4,7 @@ services:
     container_name: ohs_postgres
     restart: unless-stopped
     environment:
+      - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=ohs_db
     volumes:
@@ -11,7 +12,7 @@ services:
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d ohs_db"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ohs_db"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -70,7 +71,7 @@ services:
       # Add any environment variables your Axum app needs
       SERVER_HOST: 0.0.0.0
       SERVER_PORT: 8000
-      DATABASE_URL: postgresql://user:password@postgres:5432/ohs_db
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/ohs_db
       DATABASE_MAX_CONNECTIONS: 10
       DATABASE_MIN_CONNECTIONS: 2
       REDIS_URL: redis://redis:6379
@@ -91,7 +92,7 @@ services:
       - ohs_network
 
   garage:
-    image: dxflrs/arm64_garage:a2a9e3cec4945c4f6bb93622b860ef696ed3c075
+    image: dxflrs/garage:v1.1.0
     container_name: garage
     ports:
       - "3900:3900"  # RPC

@@ -9,6 +9,7 @@ use thiserror::Error;
 use crate::db::DatabaseError;
 
 #[derive(Debug, Error)]
+#[allow(unused)]
 pub enum AppError {
     #[error("Database error: {0}")]
     Database(#[from] DatabaseError),
@@ -78,4 +79,5 @@ impl IntoResponse for AppError {
     }
 }
 
+#[allow(unused)]
 pub type AppResult<T> = Result<T, AppError>;

@@ -5,6 +5,7 @@ use std::net::{IpAddr, SocketAddr};
 use std::str::FromStr;
 
 #[derive(Debug, Clone, Deserialize)]
+#[allow(unused)]
 pub struct Config {
     pub server: ServerConfig,
     pub database: DatabaseConfig,
@@ -14,7 +15,8 @@ pub struct Config {
     pub app: AppConfig,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]    
+#[allow(unused)]
 pub struct ServerConfig {
     pub host: IpAddr,
     pub port: u16,
@@ -22,6 +24,7 @@ pub struct ServerConfig {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+#[allow(unused)]
 pub struct DatabaseConfig {
     pub url: String,
     pub max_connections: Option<u32>,
@@ -29,11 +32,13 @@ pub struct DatabaseConfig {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+#[allow(unused)]
 pub struct RedisConfig {
     pub url: String,
 }
 
 #[derive(Debug, Clone, Deserialize)]
+#[allow(unused)]
 pub struct S3Config {
     pub endpoint: String,
     pub access_key_id: String,
@@ -43,6 +48,7 @@ pub struct S3Config {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+#[allow(unused)]
 pub struct TurnConfig {
     pub url_udp: Option<String>,
     pub url_tcp: Option<String>,
@@ -51,6 +57,7 @@ pub struct TurnConfig {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+#[allow(unused)]
 pub struct AppConfig {
     pub name: String,
     pub environment: Environment,
@@ -177,10 +184,12 @@ impl Config {
         SocketAddr::new(self.server.host, self.server.port)
     }
 
+    #[allow(unused)]
     pub fn is_production(&self) -> bool {
         self.app.environment == Environment::Production
     }
 
+    #[allow(unused)]
     pub fn is_development(&self) -> bool {
         self.app.environment == Environment::Development
     }

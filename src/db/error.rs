@@ -1,6 +1,7 @@
 use thiserror::Error;
 
 #[derive(Error, Debug)]
+#[allow(unused)]
 pub enum DatabaseError {
     #[error("Database error: {0}")]
     Sqlx(#[from] sqlx::Error),

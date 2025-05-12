@@ -33,6 +33,7 @@ pub struct Notification {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct NewNotification {
     pub user_id: Uuid,
     pub notification_type: NotificationType,
@@ -46,6 +47,7 @@ pub struct NewNotification {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct MarkNotificationRead {
     pub is_read: bool,
 } 

@@ -1,93 +1,434 @@
-{% extends "base.html" %} {% block title %}Admin Dashboard - OHS App{% endblock
-%} {% block content %}
-<div class="container mx-auto px-4 py-8">
-  <h1 class="text-3xl font-bold mb-6 text-gray-800">Admin Dashboard</h1>
+{% extends "base.html" %}
+{% block title %}Admin Dashboard - OHS Platform{% endblock %}
 
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    <!-- Companies Management Card -->
-    <div class="bg-white shadow-lg rounded-lg p-6">
-      <h2 class="text-xl font-semibold mb-4 text-gray-700">Manage Companies</h2>
-      <p class="text-gray-600 mb-4">Oversee and manage client companies.</p>
-      <a href="#" class="text-blue-500 hover:text-blue-700 font-medium"
-        >View Companies &rarr;</a
-      >
+{% block main_content %}
+<div class="min-h-screen bg-gray-50">
+  <!-- Top Navigation Bar -->
+  <nav class="bg-indigo-600 shadow-md">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center space-x-4">
+        <h1 class="text-white text-xl font-bold">OHS Admin Platform</h1>
+      </div>
+      <div class="flex items-center space-x-4">
+        <div class="relative" x-data="{ open: false }">
+          <button 
+            class="text-white p-1 rounded-full hover:bg-indigo-700 focus:outline-none"
+            @click="open = !open"
+            id="notification-button">
+            <span class="sr-only">Notifications</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            <span 
+              class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-500 rounded-full"
+              hx-get="/api/notifications/count"
+              hx-trigger="load, every 30s"
+              hx-swap="innerHTML">0</span>
+          </button>
+          <div 
+            class="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg overflow-hidden z-20 hidden"
+            x-show="open"
+            @click.away="open = false">
+            <div class="py-2">
+              <div
+                hx-get="/api/notifications"
+                hx-trigger="load"
+                hx-swap="innerHTML">
+                <div class="px-4 py-2 border-b">
+                  <p class="text-sm text-gray-500">Loading notifications...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="text-white">
+          <span>Welcome, Mr. Fenasi AKO</span>
+        </div>
+        <a href="/logout" class="text-white hover:text-gray-200">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+        </a>
+      </div>
     </div>
+  </nav>
 
-    <!-- User Management Card -->
-    <div class="bg-white shadow-lg rounded-lg p-6">
-      <h2 class="text-xl font-semibold mb-4 text-gray-700">Manage Users</h2>
-      <p class="text-gray-600 mb-4">
-        Administer OHS Specialists, Doctors, and Employees.
-      </p>
-      <div class="space-y-2">
-        <a href="#" class="block text-blue-500 hover:text-blue-700 font-medium"
-          >View OHS Specialists &rarr;</a
-        >
-        <a href="#" class="block text-blue-500 hover:text-blue-700 font-medium"
-          >View Doctors &rarr;</a
-        >
-        <a href="#" class="block text-blue-500 hover:text-blue-700 font-medium"
-          >View Employees &rarr;</a
-        >
+  <!-- Main Content -->
+  <div class="container mx-auto px-4 py-8">
+    <!-- Stats Overview -->
+    <div class="mb-8">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">Platform Overview</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Companies Stat -->
+        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
+          <div class="flex items-center">
+            <div class="p-3 rounded-full bg-blue-100 mr-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-gray-500 text-sm">Total Companies</p>
+              <p 
+                class="text-2xl font-semibold"
+                hx-get="/api/stats/companies"
+                hx-trigger="load, every 60s"
+                hx-swap="innerHTML">0</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Users Stat -->
+        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
+          <div class="flex items-center">
+            <div class="p-3 rounded-full bg-green-100 mr-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-gray-500 text-sm">Total Users</p>
+              <p 
+                class="text-2xl font-semibold"
+                hx-get="/api/stats/users"
+                hx-trigger="load, every 60s"
+                hx-swap="innerHTML">0</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Appointments Stat -->
+        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-purple-500">
+          <div class="flex items-center">
+            <div class="p-3 rounded-full bg-purple-100 mr-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-gray-500 text-sm">Today's Appointments</p>
+              <p 
+                class="text-2xl font-semibold"
+                hx-get="/api/stats/appointments/today"
+                hx-trigger="load, every 60s"
+                hx-swap="innerHTML">0</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Training Stat -->
+        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-amber-500">
+          <div class="flex items-center">
+            <div class="p-3 rounded-full bg-amber-100 mr-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path d="M12 14l9-5-9-5-9 5 9 5z" />
+                <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-gray-500 text-sm">Active Trainings</p>
+              <p 
+                class="text-2xl font-semibold"
+                hx-get="/api/stats/trainings/active"
+                hx-trigger="load, every 60s"
+                hx-swap="innerHTML">0</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Training Management Card -->
-    <div class="bg-white shadow-lg rounded-lg p-6">
-      <h2 class="text-xl font-semibold mb-4 text-gray-700">Training Modules</h2>
-      <p class="text-gray-600 mb-4">Manage training materials and sessions.</p>
-      <a href="#" class="text-blue-500 hover:text-blue-700 font-medium"
-        >Manage Trainings &rarr;</a
-      >
+    <!-- Main Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Companies Management Card -->
+      <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+        <div class="p-5 bg-gradient-to-r from-blue-500 to-blue-600">
+          <h2 class="text-xl font-semibold text-white flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+            Manage Companies
+          </h2>
+        </div>
+        <div class="p-6">
+          <p class="text-gray-600 mb-4">Oversee and manage client companies in the platform.</p>
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-sm font-medium text-gray-500">Recent Companies</span>
+            <a href="/admin/companies" class="text-sm text-blue-500 hover:underline">View All</a>
+          </div>
+          <div 
+            class="space-y-3"
+            hx-get="/api/companies/recent"
+            hx-trigger="load, every 5m"
+            hx-swap="innerHTML">
+            <p class="text-sm text-gray-500">Loading recent companies...</p>
+          </div>
+          <div class="mt-5">
+            <a href="/admin/companies/new" class="block w-full py-2 px-4 bg-blue-500 hover:bg-blue-600 text-white font-medium text-center rounded-md transition duration-200">
+              Add New Company
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- User Management Card -->
+      <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+        <div class="p-5 bg-gradient-to-r from-green-500 to-green-600">
+          <h2 class="text-xl font-semibold text-white flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            Manage Users
+          </h2>
+        </div>
+        <div class="p-6">
+          <p class="text-gray-600 mb-4">Administer system users by role and company.</p>
+          
+          <div class="space-y-3">
+            <a href="/admin/users/specialists" class="flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-md transition duration-200">
+              <span class="font-medium text-gray-700">OHS Specialists</span>
+              <span 
+                class="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded-full"
+                hx-get="/api/users/specialists/count" 
+                hx-trigger="load, every 60s"
+                hx-swap="innerHTML">0</span>
+            </a>
+            
+            <a href="/admin/users/doctors" class="flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-md transition duration-200">
+              <span class="font-medium text-gray-700">Workplace Doctors</span>
+              <span 
+                class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full"
+                hx-get="/api/users/doctors/count" 
+                hx-trigger="load, every 60s"
+                hx-swap="innerHTML">0</span>
+            </a>
+            
+            <a href="/admin/users/employees" class="flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-md transition duration-200">
+              <span class="font-medium text-gray-700">Employees</span>
+              <span 
+                class="bg-purple-100 text-purple-800 text-xs font-semibold px-2.5 py-0.5 rounded-full"
+                hx-get="/api/users/employees/count" 
+                hx-trigger="load, every 60s"
+                hx-swap="innerHTML">0</span>
+            </a>
+            
+            <a href="/admin/users/admins" class="flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-md transition duration-200">
+              <span class="font-medium text-gray-700">Admins</span>
+              <span 
+                class="bg-red-100 text-red-800 text-xs font-semibold px-2.5 py-0.5 rounded-full"
+                hx-get="/api/users/admins/count" 
+                hx-trigger="load, every 60s"
+                hx-swap="innerHTML">0</span>
+            </a>
+          </div>
+          
+          <div class="mt-5">
+            <a href="/admin/users/new" class="block w-full py-2 px-4 bg-green-500 hover:bg-green-600 text-white font-medium text-center rounded-md transition duration-200">
+              Register New User
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Training Management Card -->
+      <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+        <div class="p-5 bg-gradient-to-r from-amber-500 to-amber-600">
+          <h2 class="text-xl font-semibold text-white flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path d="M12 14l9-5-9-5-9 5 9 5z" />
+              <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />
+            </svg>
+            Training Modules
+          </h2>
+        </div>
+        <div class="p-6">
+          <p class="text-gray-600 mb-4">Manage training materials and sessions across companies.</p>
+          
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-sm font-medium text-gray-500">Upcoming Trainings</span>
+            <a href="/admin/trainings" class="text-sm text-amber-500 hover:underline">View All</a>
+          </div>
+          
+          <div 
+            class="space-y-3"
+            hx-get="/api/trainings/upcoming" 
+            hx-trigger="load, every 5m"
+            hx-swap="innerHTML">
+            <p class="text-sm text-gray-500">Loading upcoming trainings...</p>
+          </div>
+          
+          <div class="mt-5">
+            <a href="/admin/trainings/new" class="block w-full py-2 px-4 bg-amber-500 hover:bg-amber-600 text-white font-medium text-center rounded-md transition duration-200">
+              Create New Training
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Appointments Overview Card -->
+      <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+        <div class="p-5 bg-gradient-to-r from-purple-500 to-purple-600">
+          <h2 class="text-xl font-semibold text-white flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            Appointments
+          </h2>
+        </div>
+        <div class="p-6">
+          <p class="text-gray-600 mb-4">View and manage all scheduled appointments in the system.</p>
+          
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-sm font-medium text-gray-500">Today's Appointments</span>
+            <a href="/admin/appointments" class="text-sm text-purple-500 hover:underline">View All</a>
+          </div>
+          
+          <div 
+            class="space-y-3"
+            hx-get="/api/appointments/today" 
+            hx-trigger="load, every 5m"
+            hx-swap="innerHTML">
+            <p class="text-sm text-gray-500">Loading today's appointments...</p>
+          </div>
+          
+          <div class="mt-5 grid grid-cols-2 gap-2">
+            <a href="/admin/appointments/specialist" class="py-2 px-4 bg-purple-500 hover:bg-purple-600 text-white font-medium text-center rounded-md transition duration-200">
+              OHS Specialist
+            </a>
+            <a href="/admin/appointments/doctor" class="py-2 px-4 bg-purple-500 hover:bg-purple-600 text-white font-medium text-center rounded-md transition duration-200">
+              Doctor
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- System Analytics Card -->
+      <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+        <div class="p-5 bg-gradient-to-r from-indigo-500 to-indigo-600">
+          <h2 class="text-xl font-semibold text-white flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            System Analytics
+          </h2>
+        </div>
+        <div class="p-6">
+          <p class="text-gray-600 mb-4">Monitor application usage and performance metrics.</p>
+          
+          <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="bg-gray-50 p-3 rounded-md">
+              <p class="text-sm text-gray-500 mb-1">Active Users</p>
+              <p 
+                class="text-xl font-bold text-indigo-600"
+                hx-get="/api/analytics/active-users" 
+                hx-trigger="load, every 30s"
+                hx-swap="innerHTML">0</p>
+            </div>
+            
+            <div class="bg-gray-50 p-3 rounded-md">
+              <p class="text-sm text-gray-500 mb-1">Calls Today</p>
+              <p 
+                class="text-xl font-bold text-indigo-600"
+                hx-get="/api/analytics/calls-today" 
+                hx-trigger="load, every 30s"
+                hx-swap="innerHTML">0</p>
+            </div>
+          </div>
+          
+          <div class="mt-5">
+            <a href="/admin/analytics" class="block w-full py-2 px-4 bg-indigo-500 hover:bg-indigo-600 text-white font-medium text-center rounded-md transition duration-200">
+              View Detailed Analytics
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings Card -->
+      <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+        <div class="p-5 bg-gradient-to-r from-gray-700 to-gray-800">
+          <h2 class="text-xl font-semibold text-white flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Application Settings
+          </h2>
+        </div>
+        <div class="p-6">
+          <p class="text-gray-600 mb-4">Configure general application settings and preferences.</p>
+          
+          <div class="space-y-3">
+            <a href="/admin/settings/general" class="flex items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-md transition duration-200">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
+              </svg>
+              <span class="font-medium text-gray-700">General Settings</span>
+            </a>
+            
+            <a href="/admin/settings/notification" class="flex items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-md transition duration-200">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+              <span class="font-medium text-gray-700">Notification Settings</span>
+            </a>
+            
+            <a href="/admin/settings/security" class="flex items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-md transition duration-200">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              <span class="font-medium text-gray-700">Security Settings</span>
+            </a>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Appointments Overview Card -->
-    <div class="bg-white shadow-lg rounded-lg p-6">
-      <h2 class="text-xl font-semibold mb-4 text-gray-700">Appointments</h2>
-      <p class="text-gray-600 mb-4">View and manage scheduled appointments.</p>
-      <a href="#" class="text-blue-500 hover:text-blue-700 font-medium"
-        >View Appointments &rarr;</a
-      >
+    <!-- Recent Activity Section -->
+    <div class="mt-8">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">Recent Activity</h2>
+      <div class="bg-white shadow-lg rounded-lg p-6">
+        <div class="flex space-x-1 mb-6">
+          <button 
+            class="flex-1 py-2 px-4 bg-indigo-500 text-white font-medium rounded-md focus:outline-none"
+            hx-get="/api/activity/all" 
+            hx-target="#activity-content"
+            hx-trigger="click">
+            All Activity
+          </button>
+          <button 
+            class="flex-1 py-2 px-4 bg-white text-gray-700 border border-gray-300 font-medium rounded-md hover:bg-gray-50 focus:outline-none"
+            hx-get="/api/activity/registrations" 
+            hx-target="#activity-content"
+            hx-trigger="click">
+            Registrations
+          </button>
+          <button 
+            class="flex-1 py-2 px-4 bg-white text-gray-700 border border-gray-300 font-medium rounded-md hover:bg-gray-50 focus:outline-none"
+            hx-get="/api/activity/appointments" 
+            hx-target="#activity-content"
+            hx-trigger="click">
+            Appointments
+          </button>
+          <button 
+            class="flex-1 py-2 px-4 bg-white text-gray-700 border border-gray-300 font-medium rounded-md hover:bg-gray-50 focus:outline-none"
+            hx-get="/api/activity/trainings" 
+            hx-target="#activity-content"
+            hx-trigger="click">
+            Trainings
+          </button>
+        </div>
+        
+        <div 
+          id="activity-content"
+          hx-get="/api/activity/all" 
+          hx-trigger="load"
+          class="space-y-4">
+          <p class="text-gray-500">Loading recent activity...</p>
+        </div>
+      </div>
     </div>
-
-    <!-- System Analytics Card -->
-    <div class="bg-white shadow-lg rounded-lg p-6">
-      <h2 class="text-xl font-semibold mb-4 text-gray-700">System Analytics</h2>
-      <p class="text-gray-600 mb-4">
-        Monitor application usage and performance.
-      </p>
-      <a href="#" class="text-blue-500 hover:text-blue-700 font-medium"
-        >View Analytics &rarr;</a
-      >
-    </div>
-
-    <!-- Settings Card -->
-    <div class="bg-white shadow-lg rounded-lg p-6">
-      <h2 class="text-xl font-semibold mb-4 text-gray-700">
-        Application Settings
-      </h2>
-      <p class="text-gray-600 mb-4">Configure general application settings.</p>
-      <a href="#" class="text-blue-500 hover:text-blue-700 font-medium"
-        >Go to Settings &rarr;</a
-      >
-    </div>
-  </div>
-
-  <!-- Placeholder for future charts or more detailed stats -->
-  <div class="mt-10 bg-white shadow-lg rounded-lg p-6">
-    <h2 class="text-xl font-semibold mb-4 text-gray-700">
-      Recent Activity (Placeholder)
-    </h2>
-    <p class="text-gray-600">
-      This section can display recent user registrations, appointment bookings,
-      or system alerts.
-    </p>
-    <!-- Example: A simple list -->
-    <ul class="list-disc list-inside mt-4 text-gray-600">
-      <li>New employee registered: John Doe</li>
-      <li>Appointment booked: Dr. Smith with Jane P.</li>
-      <li>New training material uploaded: "Emergency Evacuation Procedures"</li>
-    </ul>
   </div>
 </div>
 {% endblock %}

@@ -8,6 +8,7 @@ use tracing::{error, info};
 
 pub struct UserRepository;
 
+#[allow(unused)]
 impl UserRepository {
     // Hash a password with Argon2
     fn hash_password(password: &str) -> Result<String, DatabaseError> {
