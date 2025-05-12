@@ -4,9 +4,13 @@ use dotenv::dotenv;
 use modules::admin::handlers::{admin_dashboard, admin_login};
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use tokio::sync::broadcast;
+use std::sync::{Arc, Mutex};
+use websocket::ws_handler;
 
 mod modules;
 mod config;
+mod websocket;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -22,6 +26,13 @@ async fn main() -> anyhow::Result<()> {
 
     let config = config::init()?;
 
+    let (tx, _rx) = broadcast::channel(100);
+    let state = Arc::new(Mutex::new(tx));
+
+    let ws_app = Router::new()
+        .route("/ws", get(ws_handler))
+        .with_state(state);
+
     // HTMX Router
     let htmx_app = Router::new()
         .route("/", get(admin_dashboard))
@@ -31,6 +42,7 @@ async fn main() -> anyhow::Result<()> {
 
     let app = Router::new()
         .route("/", get(hello))
+        .merge(ws_app)
         .nest("/admin", htmx_app)
         .nest_service("/static", tower_http::services::ServeDir::new(static_dir));
 
