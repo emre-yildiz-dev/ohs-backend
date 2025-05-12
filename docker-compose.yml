@@ -3,8 +3,9 @@ services:
     image: postgres:17.5-bookworm
     container_name: ohs_postgres
     restart: unless-stopped
-    env_file:
-      - database.env
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=ohs_db
     volumes:
       - ./postgres-data:/var/lib/postgresql/data
     ports:
