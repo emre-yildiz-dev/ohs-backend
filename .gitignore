@@ -3,3 +3,14 @@
 
 # Node
 node_modules
+
+# Garage
+garage-data
+
+# Redis
+redis-data
+
+# Postgres
+postgres-data
+
+

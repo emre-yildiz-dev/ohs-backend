@@ -41,20 +41,16 @@ services:
     restart: unless-stopped
     volumes:
       - ./coturn/turnserver.conf:/etc/coturn/turnserver.conf:ro
+      - coturn-data:/var/tmp
     # Expose UDP and TCP ports for TURN/STUN
     ports:
       - "3478:3478/tcp"
       - "3478:3478/udp"
-      - "5349:5349/tcp"
-      - "5349:5349/udp"
       - "49152-49200:49152-49200/udp"
     command: -c /etc/coturn/turnserver.conf -v
-    healthcheck:
-      test: ["CMD-SHELL", "apt-get update && apt-get install -y net-tools && netstat -tulpn | grep -q 3478 || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+    environment:
+      - TURN_USERNAME=turnuser
+      - TURN_PASSWORD=turnpassword
     networks:
       - ohs_network
 
@@ -70,12 +66,6 @@ services:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_healthy
-      garage:
-        condition: service_healthy
-      garage-init:
-        condition: service_completed_successfully
-      coturn:
         condition: service_healthy
     environment:
       # Add any environment variables your Axum app needs
@@ -93,40 +83,17 @@ services:
       - ohs_network
 
   garage:
-    image: dxflrs/garage:v1.1.0
-    container_name: ohs_garage_s3
-    restart: unless-stopped
+    image: dxflrs/arm64_garage:a2a9e3cec4945c4f6bb93622b860ef696ed3c075
+    container_name: garage
     ports:
-      - "3900:3900" # S3 API port
-      - "3901:3901" # Cluster internal RPC port
-      - "3902:3902" # Cluster internal Raft port
+      - "3900:3900"  # RPC
+      - "3901:3901"  # S3 API
     volumes:
-      - ./garage-data:/var/lib/garage
+      - garage-data:/var/lib/garage
       - ./garage-config/garage.toml:/etc/garage.toml
-    entrypoint: ["/garage", "server"]
     environment:
-      # These are used for initializing the S3 credentials
-      INITIAL_S3_ACCESS_KEY_ID: garage-access-key
-      INITIAL_S3_SECRET_ACCESS_KEY: garage-secret-key
-    healthcheck:
-      test: ["CMD", "/garage", "status"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - ohs_network
-
-  garage-init:
-    image: dxflrs/garage:v1.1.0
-    container_name: ohs_garage_init
-    depends_on:
-      garage:
-        condition: service_healthy
-    volumes:
-      - ./init-garage.sh:/init-garage.sh
-      - ./garage-data:/var/lib/garage
-      - ./garage-config/garage.toml:/etc/garage.toml
-    entrypoint: ["/bin/bash", "/init-garage.sh"]
+      - RUST_LOG=info
+    restart: unless-stopped
     networks:
       - ohs_network
 
@@ -134,6 +101,7 @@ volumes:
   postgres-data:
   redis-data:
   garage-data:
+  coturn-data:
 
 networks:
   ohs_network:

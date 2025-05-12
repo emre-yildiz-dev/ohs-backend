@@ -1,38 +1,29 @@
 # Garage Configuration File
 
-# Metadata and data directory
-metadata_dir = "/var/lib/garage/meta"
-data_dir = "/var/lib/garage/data"
+metadata_dir = "/tmp/meta"
+data_dir = "/tmp/data"
+db_engine = "sqlite"
 
-# Server configuration
-[server]
-# API endpoints
-s3_api = { bind_addr = "0.0.0.0:3900" }
-s3_region = "us-east-1"
-admin_api = { bind_addr = "0.0.0.0:3903" }
+replication_factor = 1
 
-# Network configuration for a single-node cluster
-# In production, you would configure multiple nodes
-[rpc]
-bind_addr = "0.0.0.0:3901"
-advertise_addr = "garage:3901"
+rpc_bind_addr = "[::]:3901"
+rpc_public_addr = "127.0.0.1:3901"
+rpc_secret = "4425f5c26c5e11581d3223904324dcb5b5d5dfb14e5e7f35e38c595424f5f1e6"
 
-[consul_discovery]
-enabled = false
-consul_http_addr = "http://localhost:8500"
+[s3_api]
+s3_region = "garage"
+api_bind_addr = "[::]:3900"
+root_domain = ".s3.garage.localhost"
 
-# Initial meta/data node
-# This is a single-node configuration
-[cluster_layout]
-datacenter_count = 1
-node_count = 1
-zones_per_datacenter = 1
+[s3_web]
+bind_addr = "[::]:3902"
+root_domain = ".web.garage.localhost"
+index = "index.html"
 
-[replication]
-# Single node, so we don't need replication
-# For production, set higher values
-mode = "none"
+[k2v_api]
+api_bind_addr = "[::]:3904"
 
-[compression]
-# Algorithm used to compress data
-algorithm = "zstd" 
+[admin]
+api_bind_addr = "[::]:3903"
+admin_token = "$(openssl rand -base64 32)"
+metrics_token = "$(openssl rand -base64 32)"
