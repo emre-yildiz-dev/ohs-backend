@@ -35,7 +35,9 @@ async fn handle_socket(
     // Task for forwarding messages from broadcast to the WebSocket
     let send_task = tokio::spawn(async move {
         while let Ok(msg) = rx.recv().await {
-            if sender.send(Message::Text(msg.into())).await.is_err() {
+            let reversed = msg.chars().rev().collect::<String>();
+            // Send the reversed message back to the WebSocket
+            if sender.send(Message::Text(reversed.into())).await.is_err() {
                 break;
             }
         }

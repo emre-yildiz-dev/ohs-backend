@@ -13,7 +13,7 @@ RUN npm install -g pnpm && \
     pnpm install && \
     pnpm run build:css
 
-FROM rust:1.86.0-slim-bookworm AS builder
+FROM rust:1.87.0-slim-bookworm AS builder
 
 # Create a new empty shell project
 WORKDIR /usr/src/app
