@@ -214,13 +214,19 @@ impl FromStr for Environment {
     }
 }
 
-// Use once_cell for a global config instance that's initialized once
-use once_cell::sync::OnceCell;
+// once_cell included in the std library
+use std::sync::OnceLock;
 
-static CONFIG: OnceCell<Config> = OnceCell::new();
+static CONFIG: OnceLock<Config> = OnceLock::new();
 
 pub fn init() -> Result<&'static Config> {
-    CONFIG.get_or_try_init(Config::from_env)
+    match CONFIG.get() {
+        Some(config) => Ok(config),
+        None => {
+            let config = Config::from_env()?;
+            Ok(CONFIG.get_or_init(|| config))
+        }
+    }
 }
 
 pub fn get() -> &'static Config {

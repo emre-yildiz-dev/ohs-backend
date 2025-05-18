@@ -39,7 +39,7 @@ async fn main() -> anyhow::Result<()> {
     let ws_state = Arc::new(Mutex::new(tx));
 
     // Create app state with DB pool
-    let state = AppState::new(db_pool, ws_state.clone());
+    let state = AppState::new(db_pool, config.clone(), ws_state.clone());
 
     let ws_app = Router::new()
         .route("/ws", get(ws_handler))

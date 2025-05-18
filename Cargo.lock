@@ -1177,7 +1177,6 @@ dependencies = [
  "chrono",
  "dotenvy",
  "futures-util",
- "once_cell",
  "rand 0.9.1",
  "secrecy",
  "serde",

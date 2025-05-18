@@ -1,16 +1,18 @@
 use std::sync::{Arc, Mutex};
 use sqlx::PgPool;
 use tokio::sync::broadcast;
+use crate::config;
 
 #[derive(Clone)]
 #[allow(unused)]
 pub struct AppState {
     pub db: PgPool,
+    pub env: config::Config,
     pub ws_tx: Arc<Mutex<broadcast::Sender<String>>>,
 }
 
 impl AppState {
-    pub fn new(db: PgPool, ws_tx: Arc<Mutex<broadcast::Sender<String>>>) -> Self {
-        Self { db, ws_tx }
+    pub fn new(db: PgPool, env: config::Config, ws_tx: Arc<Mutex<broadcast::Sender<String>>>) -> Self {
+        Self { db, env, ws_tx }
     }
 }

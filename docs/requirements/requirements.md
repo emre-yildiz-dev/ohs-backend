@@ -4,7 +4,9 @@
 
 ### 1. Overview
 
-This multi-tenant backend application is designed to facilitate communication between Occupational Health and Safety Specialists (OhsSpecialist), Workplace Doctor(Doctor), and Employees. This app will enable employees to engage in real-time audio/video calls with safety experts, attend safety rainnigs, and schedule appointments online.
+- This multi-tenant backend application is designed to facilitate communication between Occupational Health and Safety Specialists (OhsSpecialist), Workplace Doctor(Doctor), and Employees. This app will enable employees to engage in real-time audio/video calls with safety experts, attend safety rainnigs, and schedule appointments online.
+
+- This app has Tenants that manages companies for Occupational Health and Safety. So tenant means an expert firm at OHS. SuperAdmins add tenants to application. SuperAdmins are the owner of the app. Tenants are the user of the app. Tenants includes Admin, OhsSpecialist, Doctor roles in its cooperation.
 
 ### 2. User Roles
 
@@ -24,6 +26,7 @@ This multi-tenant backend application is designed to facilitate communication be
 #### 2.2 Occupational Health and Safety Specialist (OhsSpecialist)
 
 - Login to the application
+- OhsSpecialist should login as a OhsSpecialist for multiple companies.
 - Manage Employees, and Doctors for related companies.
 - Manage availability for appointments.
 - Accept or decline appointment requests.
@@ -37,6 +40,7 @@ This multi-tenant backend application is designed to facilitate communication be
 #### 2.3 Workplace Doctor (Doctor)
 
 - Login to the application.
+- Workplace Doctor should login as a Doctor for multiple companies.
 - Manage avaiability for appointments.
 - Accept or decline appointment requests.
 - Initiate or receive video/audio calls.
@@ -46,8 +50,10 @@ This multi-tenant backend application is designed to facilitate communication be
 #### 2.4 Admin
 
 - Login to the application.
+- Admin should login as an Admin for multiple companies.
 - Manage companies (Multi-tenant).
 - Approve OhsSpecialist and doctor accounts.
+- Admin also be OhsSpecialist.
 - Manage OhsSpecialist, Doctor, Employee registrations and roles in the application.
 - View system analytics.
 - Manage content and app settings.
@@ -76,7 +82,7 @@ This multi-tenant backend application is designed to facilitate communication be
 
 #### 3.3 Training Module
 
-- Live training events via streaming.
+- Live training events via streaming that participants should ask questions to the host lively.
 - Completion tracking and digital certificates.
 - Quizes after sessions to measure understanding.
 - Feedback submission for traning sessions.
@@ -95,13 +101,16 @@ This multi-tenant backend application is designed to facilitate communication be
 - OhsSpecialist can respond, escalate, or archive the report.
 - Status tracking(Open, In Review, Resolved).
 
-#### 3.6 Push Notifications
+#### 3.6 Risk Analysis
+- OhsSpecialist should create risk analysis templates and check them via database records.
+
+#### 3.7 Push Notifications
 
 - Training reminders.
 - Upcoming appointment alerts.
 - Important safety alerts or announcements.
 
-#### 3.7 Multimedia Support
+#### 3.8 Multimedia Support
 
 - Upload and display of PDFs, images.
 
@@ -122,6 +131,6 @@ This multi-tenant backend application is designed to facilitate communication be
 - Real-Time Communication: Mediasoup Rust crate
 - Websocket Signaling: Axum websocket
 - STUN/TURN Server: Coturn
-- Authentication: JWT, RBAC
+- Authentication: JWT, RBAC, refresh tokens
 - Notification: Expo Push Notification, External Email Service
 - Storage: Garage S3 with aws rust client
