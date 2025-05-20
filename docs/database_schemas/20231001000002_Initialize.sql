@@ -104,15 +104,6 @@ CREATE TABLE tenants (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE companies (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id),
-    name TEXT NOT NULL,
-    description TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     -- tenant_id is NULL for SuperAdmins.
@@ -145,11 +136,11 @@ ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 CREATE POLICY select_own_user ON users FOR SELECT
     USING (id = current_setting('app.current_user_id', true)::uuid);
 CREATE POLICY select_users_for_super_admin ON users FOR SELECT
-    USING ('SUPER_ADMIN' = ANY(get_current_user_roles()));
+    USING ('super_admin' = ANY(get_current_user_roles()));
 -- TenantAdmins can see users within their tenant.
 CREATE POLICY select_users_for_tenant_admin ON users FOR SELECT
     USING (
-        'TENANT_ADMIN' = ANY(get_current_user_roles()) AND
+        'tenant_admin' = ANY(get_current_user_roles()) AND
         tenant_id = current_setting('app.current_tenant_id', true)::uuid
     );
 -- TODO: Add policies for UPDATE (only self, or admins)
@@ -282,6 +273,12 @@ CREATE TABLE doctor_company_assignments (
     UNIQUE (doctor_user_id, company_id)
 );
 
+ALTER TABLE doctor_company_assignments ENABLE ROW LEVEL SECURITY;
+CREATE POLICY select_own_doctor_company_assignments ON doctor_company_assignments FOR SELECT
+    USING (doctor_user_id = current_setting('app.current_user_id', true)::uuid);
+CREATE POLICY select_doctor_company_assignments_for_super_admin ON doctor_company_assignments FOR SELECT
+    USING ('super_admin' = ANY(get_current_user_roles()));
+
 CREATE TABLE professional_availabilities (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     professional_user_id UUID NOT NULL REFERENCES users(id),
@@ -327,8 +324,8 @@ CREATE POLICY manage_appointments_for_participants ON appointments FOR ALL
     USING (
         tenant_id = current_setting('app.current_tenant_id', true)::uuid AND
         (
-            (employee_user_id = current_setting('app.current_user_id', true)::uuid AND 'EMPLOYEE' = ANY(get_current_user_roles())) OR
-            (professional_user_id = current_setting('app.current_user_id', true)::uuid AND (get_current_user_roles() && ARRAY['OHS_SPECIALIST', 'DOCTOR']::text[]))
+            (employee_user_id = current_setting('app.current_user_id', true)::uuid AND 'employee' = ANY(get_current_user_roles())) OR
+            (professional_user_id = current_setting('app.current_user_id', true)::uuid AND (get_current_user_roles() && ARRAY['ohs_specialist', 'doctor']::text[]))
         )
     );
 CREATE POLICY view_appointments_for_tenant_admin ON appointments FOR SELECT
@@ -450,8 +447,8 @@ CREATE POLICY manage_quizzes_for_ohs_or_admin ON training_quizzes FOR ALL
     USING (
         tenant_id = current_setting('app.current_tenant_id', true)::uuid AND
         (
-            ('OHS_SPECIALIST' = ANY(get_current_user_roles()) AND created_by_user_id = current_setting('app.current_user_id', true)::uuid) OR
-            ('TENANT_ADMIN' = ANY(get_current_user_roles()))
+            ('ohs_specialist' = ANY(get_current_user_roles()) AND created_by_user_id = current_setting('app.current_user_id', true)::uuid) OR
+            ('tenant_admin' = ANY(get_current_user_roles()))
         )
     );
 CREATE POLICY view_quizzes_for_tenant_members ON training_quizzes FOR SELECT
@@ -677,13 +674,13 @@ CREATE TABLE system_settings (
 );
 ALTER TABLE system_settings ENABLE ROW LEVEL SECURITY;
 CREATE POLICY manage_global_settings_for_super_admin ON system_settings FOR ALL
-    USING ('SUPER_ADMIN' = ANY(get_current_user_roles()) AND tenant_id IS NULL);
+    USING ('super_admin' = ANY(get_current_user_roles()) AND tenant_id IS NULL);
 CREATE POLICY manage_tenant_settings_for_tenant_admin ON system_settings FOR ALL
-    USING ('TENANT_ADMIN' = ANY(get_current_user_roles()) AND tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+    USING ('tenant_admin' = ANY(get_current_user_roles()) AND tenant_id = current_setting('app.current_tenant_id', true)::uuid);
 CREATE POLICY view_settings_for_tenant_members ON system_settings FOR SELECT -- Read-only for relevant settings
     USING (
         (tenant_id = current_setting('app.current_tenant_id', true)::uuid) OR
-        (tenant_id IS NULL AND 'SUPER_ADMIN' != ANY(get_current_user_roles())) -- Non-superadmins can see global settings
+        (tenant_id IS NULL AND 'super_admin' != ANY(get_current_user_roles())) -- Non-superadmins can see global settings
     );
 
 -- Create Indexes for performance

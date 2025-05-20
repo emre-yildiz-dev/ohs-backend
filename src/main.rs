@@ -50,7 +50,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/", get(admin_dashboard))
         .route("/login", get(admin_login));
 
-    let static_dir = format!("{}", config.app.static_dir);
+    let static_dir = config.app.static_dir.to_string();
 
     let app = Router::new()
         .route("/", get(hello))

@@ -73,7 +73,6 @@ LABEL org.opencontainers.image.version="1.0.0"
 
 # Configure the application
 ENV RUST_LOG=info
-ENV LISTEN_ADDRESS=0.0.0.0:8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \

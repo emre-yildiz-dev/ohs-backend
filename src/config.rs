@@ -65,9 +65,10 @@ pub struct AppConfig {
     pub templates_dir: String,
 }
 
-#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum Environment {
+    #[default]
     Development,
     Staging,
     Production,
@@ -192,12 +193,6 @@ impl Config {
     #[allow(unused)]
     pub fn is_development(&self) -> bool {
         self.app.environment == Environment::Development
-    }
-}
-
-impl Default for Environment {
-    fn default() -> Self {
-        Environment::Development
     }
 }
 
