@@ -110,6 +110,11 @@ CREATE TYPE notification_type AS ENUM (
     'new_message'
 );
 
+CREATE TYPE chat_session_type AS ENUM (
+    'training_session',
+    'appointment_session'
+);
+
 -- 2. CORE TABLES
 
 CREATE TABLE tenants (
@@ -882,6 +887,161 @@ CREATE POLICY view_settings_for_tenant_members ON system_settings FOR SELECT
         (tenant_id = current_setting('app.current_tenant_id', true)::uuid) OR
         (tenant_id IS NULL AND NOT ('super_admin' = ANY(get_current_user_roles()))) -- Non-superadmins can see global settings
     );
+
+
+-- 3. CHAT RELATED TABLES (New Section)
+
+CREATE TABLE session_chats (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    -- Link to either a training session or an appointment. Only one should be non-NULL.
+    training_session_id UUID UNIQUE REFERENCES training_sessions(id) ON DELETE CASCADE,
+    appointment_id UUID UNIQUE REFERENCES appointments(id) ON DELETE CASCADE,
+    chat_type chat_session_type NOT NULL, -- Optional: if you want to enforce type
+    is_active BOOLEAN DEFAULT TRUE, -- To disable a chat if needed
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    CONSTRAINT chk_chat_link CHECK (
+        (training_session_id IS NOT NULL AND appointment_id IS NULL) OR
+        (training_session_id IS NULL AND appointment_id IS NOT NULL)
+    )
+);
+ALTER TABLE session_chats ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Participants of the training session or appointment can access the chat.
+CREATE POLICY manage_session_chats_for_participants ON session_chats FOR ALL
+    USING (
+        tenant_id = current_setting('app.current_tenant_id', true)::uuid AND
+        (
+            -- Training Session Chat
+            (training_session_id IS NOT NULL AND EXISTS (
+                SELECT 1 FROM training_sessions ts
+                WHERE ts.id = session_chats.training_session_id AND
+                (
+                    -- Host can access
+                    ts.host_user_id = current_setting('app.current_user_id', true)::uuid OR
+                    -- Enrolled employees can access
+                    EXISTS (
+                        SELECT 1 FROM training_enrollments te
+                        WHERE te.training_session_id = ts.id AND
+                              te.employee_user_id = current_setting('app.current_user_id', true)::uuid AND
+                              te.status IN ('registered', 'attended', 'completed') -- Or relevant statuses
+                    )
+                )
+            )) OR
+            -- Appointment Chat
+            (appointment_id IS NOT NULL AND EXISTS (
+                SELECT 1 FROM appointments app
+                WHERE app.id = session_chats.appointment_id AND
+                (
+                    app.employee_user_id = current_setting('app.current_user_id', true)::uuid OR
+                    app.professional_user_id = current_setting('app.current_user_id', true)::uuid
+                )
+            ))
+        )
+    );
+
+CREATE POLICY view_session_chats_for_tenant_admin ON session_chats FOR SELECT
+    USING (
+        'tenant_admin' = ANY(get_current_user_roles()) AND
+        tenant_id = current_setting('app.current_tenant_id', true)::uuid
+    );
+
+CREATE POLICY view_session_chats_for_super_admin ON session_chats FOR SELECT
+    USING ('super_admin' = ANY(get_current_user_roles()));
+
+
+CREATE TABLE chat_messages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    chat_id UUID NOT NULL REFERENCES session_chats(id) ON DELETE CASCADE,
+    sender_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    tenant_id UUID NOT NULL, -- Denormalized from session_chats for RLS efficiency
+    content TEXT NOT NULL,
+    sent_at TIMESTAMPTZ DEFAULT NOW(),
+    -- For read receipts (more advanced, can be added later)
+    -- read_by JSONB, -- e.g., {"user_id1": "timestamp", "user_id2": "timestamp"}
+    is_deleted BOOLEAN DEFAULT FALSE -- For soft deletes by sender or admin
+);
+-- Add FK to tenants for chat_messages.tenant_id
+ALTER TABLE chat_messages ADD CONSTRAINT fk_chat_messages_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE;
+ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Only participants of the parent chat session can send/see messages.
+-- Sender can delete their own message (soft delete).
+CREATE POLICY manage_chat_messages_for_chat_participants ON chat_messages FOR ALL
+    USING (
+        tenant_id = current_setting('app.current_tenant_id', true)::uuid AND
+        EXISTS (
+            SELECT 1 FROM session_chats sc
+            WHERE sc.id = chat_messages.chat_id AND
+            (
+                -- Training Session Chat Check
+                (sc.training_session_id IS NOT NULL AND EXISTS (
+                    SELECT 1 FROM training_sessions ts
+                    WHERE ts.id = sc.training_session_id AND
+                    (
+                        ts.host_user_id = current_setting('app.current_user_id', true)::uuid OR
+                        EXISTS (
+                            SELECT 1 FROM training_enrollments te
+                            WHERE te.training_session_id = ts.id AND
+                                  te.employee_user_id = current_setting('app.current_user_id', true)::uuid AND
+                                  te.status IN ('registered', 'attended', 'completed')
+                        )
+                    )
+                )) OR
+                -- Appointment Chat Check
+                (sc.appointment_id IS NOT NULL AND EXISTS (
+                    SELECT 1 FROM appointments app
+                    WHERE app.id = sc.appointment_id AND
+                    (
+                        app.employee_user_id = current_setting('app.current_user_id', true)::uuid OR
+                        app.professional_user_id = current_setting('app.current_user_id', true)::uuid
+                    )
+                ))
+            )
+        )
+    )
+    WITH CHECK ( -- For INSERT and UPDATE
+        sender_user_id = current_setting('app.current_user_id', true)::uuid AND -- Can only send as self
+        NOT is_deleted -- Cannot insert/update a deleted message directly through this policy
+    );
+
+-- Policy for soft-deleting own message
+CREATE POLICY soft_delete_own_chat_message ON chat_messages FOR UPDATE
+    USING (
+        sender_user_id = current_setting('app.current_user_id', true)::uuid AND
+        NOT is_deleted -- Can only soft-delete an existing non-deleted message
+    )
+    WITH CHECK (is_deleted = TRUE); -- The update must set is_deleted to true
+
+-- TenantAdmins might need to moderate/view messages (e.g., compliance)
+CREATE POLICY view_chat_messages_for_tenant_admin ON chat_messages FOR SELECT
+    USING (
+        'tenant_admin' = ANY(get_current_user_roles()) AND
+        tenant_id = current_setting('app.current_tenant_id', true)::uuid
+    );
+-- TenantAdmins can also soft-delete messages for moderation
+CREATE POLICY moderate_chat_messages_for_tenant_admin ON chat_messages FOR UPDATE
+    USING (
+        'tenant_admin' = ANY(get_current_user_roles()) AND
+        tenant_id = current_setting('app.current_tenant_id', true)::uuid
+    )
+    WITH CHECK (is_deleted = TRUE); -- Can only set is_deleted to true
+
+CREATE POLICY view_chat_messages_for_super_admin ON chat_messages FOR SELECT
+    USING ('super_admin' = ANY(get_current_user_roles()));
+CREATE POLICY moderate_chat_messages_for_super_admin ON chat_messages FOR UPDATE
+    USING ('super_admin' = ANY(get_current_user_roles()))
+    WITH CHECK (is_deleted = TRUE);
+
+-- Indexes for Chat Tables
+CREATE INDEX idx_session_chats_tenant_id ON session_chats(tenant_id);
+CREATE INDEX idx_session_chats_training_session_id ON session_chats(training_session_id) WHERE training_session_id IS NOT NULL;
+CREATE INDEX idx_session_chats_appointment_id ON session_chats(appointment_id) WHERE appointment_id IS NOT NULL;
+
+CREATE INDEX idx_chat_messages_chat_id_sent_at ON chat_messages(chat_id, sent_at DESC);
+CREATE INDEX idx_chat_messages_sender_user_id ON chat_messages(sender_user_id);
+CREATE INDEX idx_chat_messages_tenant_id ON chat_messages(tenant_id);
 
 
 -- Create Indexes for performance (largely similar to your list, with adjustments)
