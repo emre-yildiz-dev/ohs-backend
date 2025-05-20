@@ -12,6 +12,61 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql STABLE;
 
+CREATE OR REPLACE FUNCTION get_tenant_effective_limit(
+    p_tenant_id UUID,
+    p_limit_type TEXT -- e.g., 'max_companies', 'max_employees_total', etc.
+)
+RETURNS INTEGER AS $$
+DECLARE
+    v_limit_value INTEGER;
+    v_subscription tenant_subscriptions%ROWTYPE;
+    v_plan subscription_plans%ROWTYPE;
+BEGIN
+    -- Get active subscription for the tenant
+    SELECT * INTO v_subscription
+    FROM tenant_subscriptions ts
+    WHERE ts.tenant_id = p_tenant_id AND ts.status IN ('active', 'trialing') -- Consider 'past_due' as still active for a grace period?
+    ORDER BY ts.start_date DESC LIMIT 1;
+
+    IF NOT FOUND THEN
+        -- No active subscription, return a very restrictive default or NULL/0 if features should be disabled
+        -- Or, if you added base_ columns to tenants table, fetch from there.
+        -- For this example, let's return 0, meaning feature is disabled without active subscription.
+        RETURN 0; -- Or handle as an error / specific default
+    END IF;
+
+    -- Get the plan details
+    SELECT * INTO v_plan FROM subscription_plans sp WHERE sp.id = v_subscription.plan_id;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Subscription plan not found for tenant %', p_tenant_id;
+        RETURN 0; -- Should not happen if FKs are in place
+    END IF;
+
+    -- Check custom overrides on the subscription first, then plan defaults
+    CASE p_limit_type
+        WHEN 'max_companies' THEN
+            v_limit_value := COALESCE(v_subscription.custom_max_companies, v_plan.max_companies);
+        WHEN 'max_employees_total' THEN
+            v_limit_value := COALESCE(v_subscription.custom_max_employees_total, v_plan.max_employees_total);
+        WHEN 'max_doctors' THEN
+            v_limit_value := COALESCE(v_subscription.custom_max_doctors, v_plan.max_doctors);
+        WHEN 'max_ohs_specialists' THEN
+            v_limit_value := COALESCE(v_subscription.custom_max_ohs_specialists, v_plan.max_ohs_specialists);
+        WHEN 'live_session_time_limit_minutes' THEN
+            v_limit_value := COALESCE(v_subscription.custom_live_session_time_limit_minutes, v_plan.live_session_time_limit_minutes);
+        WHEN 'storage_limit_gb' THEN
+            v_limit_value := COALESCE(v_subscription.custom_storage_limit_gb, v_plan.storage_limit_gb);
+        ELSE
+            RAISE EXCEPTION 'Unknown limit type: %', p_limit_type;
+            v_limit_value := NULL; -- Or 0
+    END CASE;
+
+    RETURN v_limit_value;
+END;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER; -- SECURITY DEFINER if it needs to bypass RLS of underlying tables for this specific lookup. Be cautious.
+                                          -- Or ensure the calling role has SELECT on subscription_plans and tenant_subscriptions.
+
+
 -- 1. ENUMS
 CREATE TYPE user_role AS ENUM (
     'super_admin',
@@ -115,6 +170,20 @@ CREATE TYPE chat_session_type AS ENUM (
     'appointment_session'
 );
 
+CREATE TYPE subscription_plan_status AS ENUM (
+    'active',      -- Plan is available for new subscriptions
+    'deprecated',  -- Plan is no longer available for new subscriptions but existing ones continue
+    'inactive'     -- Plan is completely inactive
+);
+
+CREATE TYPE tenant_subscription_status AS ENUM (
+    'active',      -- Tenant's subscription is current and paid
+    'past_due',    -- Payment is overdue
+    'cancelled',   -- Subscription was cancelled by tenant or admin
+    'expired',     -- Subscription period ended and not renewed
+    'trialing'     -- Tenant is on a trial period
+);
+
 -- 2. CORE TABLES
 
 CREATE TABLE tenants (
@@ -122,8 +191,6 @@ CREATE TABLE tenants (
     name TEXT NOT NULL,
     description TEXT,
     owner_user_id UUID, -- REFERENCES users(id) ON DELETE SET NULL (Forward reference, add later)
-    max_companies INTEGER DEFAULT 10,
-    max_users_per_company INTEGER DEFAULT 100,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -140,6 +207,81 @@ CREATE POLICY select_own_tenant_for_tenant_members ON tenants FOR SELECT
 CREATE POLICY update_own_tenant_for_tenant_admin ON tenants FOR UPDATE
     USING (id = current_setting('app.current_tenant_id', true)::uuid AND
            'tenant_admin' = ANY(get_current_user_roles()));
+
+
+-- 2. SUBSCRIPTION TABLES
+
+CREATE TABLE subscription_plans (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL UNIQUE,
+    description TEXT,
+    price_monthly NUMERIC(10, 2) NOT NULL, -- Or price_yearly, or use a pricing model ID from a payment gateway
+    currency VARCHAR(3) NOT NULL DEFAULT 'USD',
+    status subscription_plan_status NOT NULL DEFAULT 'active',
+
+    -- Feature Limits (can be NULL if unlimited or not applicable to the plan)
+    max_companies INTEGER,
+    max_employees_total INTEGER, -- Max employees across all companies in the tenant
+    max_doctors INTEGER,
+    max_ohs_specialists INTEGER,
+    live_session_time_limit_minutes INTEGER, -- Per session
+    storage_limit_gb INTEGER,
+    -- You can add more boolean flags for specific features
+    -- e.g., has_advanced_analytics BOOLEAN DEFAULT FALSE,
+    --       has_custom_branding BOOLEAN DEFAULT FALSE,
+
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE subscription_plans ENABLE ROW LEVEL SECURITY;
+-- RLS: SuperAdmins manage plans. All authenticated users can view active plans.
+CREATE POLICY manage_subscription_plans_for_super_admin ON subscription_plans FOR ALL
+    USING ('super_admin' = ANY(get_current_user_roles()));
+CREATE POLICY view_active_subscription_plans ON subscription_plans FOR SELECT
+    USING (status = 'active' AND current_setting('app.current_user_id', true) IS NOT NULL); -- Any authenticated user
+
+CREATE POLICY view_own_subscribed_plan ON subscription_plans FOR SELECT
+    USING (EXISTS (
+        SELECT 1 FROM tenant_subscriptions ts
+        WHERE ts.plan_id = subscription_plans.id
+          AND ts.tenant_id = current_setting('app.current_tenant_id', true)::uuid
+          AND ts.status IN ('active', 'trialing')
+    ));
+
+
+CREATE TABLE tenant_subscriptions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL UNIQUE REFERENCES tenants(id) ON DELETE CASCADE, -- A tenant has one active subscription at a time
+    plan_id UUID NOT NULL REFERENCES subscription_plans(id) ON DELETE RESTRICT, -- Don't delete a plan if tenants are subscribed
+    status tenant_subscription_status NOT NULL DEFAULT 'trialing',
+    start_date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    end_date TIMESTAMPTZ, -- NULL for ongoing or auto-renewing until explicitly set
+    trial_ends_at TIMESTAMPTZ,
+    -- Stripe/Payment Gateway specific IDs
+    payment_gateway_customer_id TEXT,
+    payment_gateway_subscription_id TEXT,
+    -- Overrides for this specific tenant subscription (rare, but possible for custom deals)
+    custom_max_companies INTEGER,
+    custom_max_employees_total INTEGER,
+    custom_max_doctors INTEGER,
+    custom_max_ohs_specialists INTEGER,
+    custom_live_session_time_limit_minutes INTEGER,
+    custom_storage_limit_gb INTEGER,
+
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE tenant_subscriptions ENABLE ROW LEVEL SECURITY;
+-- RLS: SuperAdmins manage all. TenantAdmins manage their own.
+CREATE POLICY manage_tenant_subscriptions_for_super_admin ON tenant_subscriptions FOR ALL
+    USING ('super_admin' = ANY(get_current_user_roles()));
+CREATE POLICY manage_own_tenant_subscription_for_tenant_admin ON tenant_subscriptions FOR ALL
+    USING (
+        'tenant_admin' = ANY(get_current_user_roles()) AND
+        tenant_id = current_setting('app.current_tenant_id', true)::uuid
+    );
+CREATE POLICY view_own_tenant_subscription_for_tenant_members ON tenant_subscriptions FOR SELECT
+    USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
 
 
 CREATE TABLE companies (
@@ -183,7 +325,6 @@ CREATE TABLE users (
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     status user_status NOT NULL DEFAULT 'pending',
-    expo_push_token TEXT,
     password_reset_token TEXT,
     password_reset_expires_at TIMESTAMPTZ,
     last_login_at TIMESTAMPTZ,
@@ -839,6 +980,40 @@ CREATE POLICY manage_own_notifications ON notifications FOR ALL
 -- No super_admin or tenant_admin policy to view others' notifications by default for privacy.
 -- If needed for audit, specific audit log policies would be better.
 
+CREATE TABLE user_push_tokens (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token TEXT NOT NULL, -- The Expo Push Token string
+    device_name TEXT,    -- Optional: User-friendly name for the device (e.g., "John's iPhone 13")
+    last_used_at TIMESTAMPTZ DEFAULT NOW(), -- Useful for cleaning up stale tokens
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE (user_id, token) -- A user should not have the same token registered multiple times
+    -- UNIQUE (token) -- Alternatively, if a token must be globally unique (Expo tokens usually are per app installation)
+                     -- Making it unique per user is safer if there's any edge case of token reuse across users (unlikely with Expo)
+);
+ALTER TABLE user_push_tokens ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies for user_push_tokens:
+-- Users can manage their own push tokens (create, delete, view).
+CREATE POLICY manage_own_user_push_tokens ON user_push_tokens FOR ALL
+    USING (user_id = current_setting('app.current_user_id', true)::uuid);
+
+-- SuperAdmins can view tokens for debugging/administrative purposes (use with caution for privacy).
+CREATE POLICY view_user_push_tokens_for_super_admin ON user_push_tokens FOR SELECT
+    USING ('super_admin' = ANY(get_current_user_roles()));
+
+-- TenantAdmins might view tokens of users within their tenant (use with caution).
+CREATE POLICY view_user_push_tokens_for_tenant_admin ON user_push_tokens FOR SELECT
+    USING (
+        'tenant_admin' = ANY(get_current_user_roles()) AND
+        EXISTS (
+            SELECT 1 FROM users u
+            WHERE u.id = user_push_tokens.user_id AND
+                  u.tenant_id = current_setting('app.current_tenant_id', true)::uuid
+        )
+    );
+
+
 
 CREATE TABLE call_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1153,3 +1328,18 @@ CREATE INDEX idx_call_logs_start_time ON call_logs(start_time);
 
 -- System Settings table
 CREATE INDEX idx_system_settings_key_tenant ON system_settings(setting_key, tenant_id);
+
+-- 5. INDEXES for new tables
+
+CREATE INDEX idx_tenant_subscriptions_tenant_id ON tenant_subscriptions(tenant_id);
+CREATE INDEX idx_tenant_subscriptions_plan_id ON tenant_subscriptions(plan_id);
+CREATE INDEX idx_tenant_subscriptions_status ON tenant_subscriptions(status);
+CREATE INDEX idx_tenant_subscriptions_end_date ON tenant_subscriptions(end_date);
+
+CREATE INDEX idx_subscription_plans_status ON subscription_plans(status);
+CREATE INDEX idx_subscription_plans_price_monthly ON subscription_plans(price_monthly);
+
+-- Indexes for user_push_tokens
+CREATE INDEX idx_user_push_tokens_user_id ON user_push_tokens(user_id);
+CREATE INDEX idx_user_push_tokens_token ON user_push_tokens(token); -- If you query by token to find a user (e.g., on receiving a new token)
+CREATE INDEX idx_user_push_tokens_last_used_at ON user_push_tokens(last_used_at);
