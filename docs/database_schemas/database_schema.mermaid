@@ -1,0 +1,479 @@
+erDiagram
+
+    tenants {
+        UUID id PK
+        TEXT name "NOT NULL"
+        TEXT description
+        UUID owner_user_id FK "nullable, to users.id"
+        BOOLEAN is_active "DEFAULT TRUE"
+        TIMESTAMPTZ created_at "DEFAULT NOW()"
+        TIMESTAMPTZ updated_at "DEFAULT NOW()"
+    }
+
+    users {
+        UUID id PK
+        UUID tenant_id FK "nullable, to tenants.id"
+        UUID company_id FK "nullable, to companies.id"
+        TEXT email "UNIQUE, NOT NULL"
+        TEXT password_hash "NOT NULL"
+        user_status status "NOT NULL DEFAULT 'pending'"
+        TEXT password_reset_token
+        TIMESTAMPTZ password_reset_expires_at
+        TIMESTAMPTZ last_login_at
+        TIMESTAMPTZ created_at "DEFAULT NOW()"
+        TIMESTAMPTZ updated_at "DEFAULT NOW()"
+    }
+
+    companies {
+        UUID id PK
+        UUID tenant_id FK "NOT NULL, to tenants.id"
+        TEXT name "NOT NULL"
+        TEXT description
+        company_status status "NOT NULL DEFAULT 'active'"
+        TIMESTAMPTZ created_at "DEFAULT NOW()"
+        TIMESTAMPTZ updated_at "DEFAULT NOW()"
+    }
+
+    user_profiles {
+        UUID user_id PK "FK to users.id"
+        TEXT first_name "NOT NULL"
+        TEXT last_name "NOT NULL"
+        DATE date_of_birth
+        VARCHAR_20_ gender
+        TEXT phone_number "UNIQUE"
+        TEXT profile_picture_url
+        UUID company_id FK "nullable, to companies.id"
+        TEXT department
+        TEXT job_title
+        TEXT address
+        TEXT city
+        TEXT state
+        TEXT zip_code
+        TEXT country
+        TIMESTAMPTZ created_at "DEFAULT NOW()"
+        TIMESTAMPTZ updated_at "DEFAULT NOW()"
+    }
+
+    user_tenant_context_roles {
+        UUID id PK
+        UUID user_id FK "NOT NULL, to users.id"
+        user_role role "NOT NULL"
+        UUID tenant_id FK "nullable, to tenants.id"
+        UUID company_id FK "nullable, to companies.id"
+        TIMESTAMPTZ created_at "DEFAULT NOW()"
+        TEXT unique_constraint "UNIQUE (user_id, role, tenant_id, company_id)"
+    }
+
+    company_profiles {
+        UUID id PK
+        UUID company_id FK "UNIQUE, NOT NULL, to companies.id"
+        TEXT contact_email
+        TEXT contact_phone
+        TEXT address
+        TEXT city
+        TEXT state
+        TEXT zip_code
+        TEXT country
+        TIMESTAMPTZ created_at "DEFAULT NOW()"
+        TIMESTAMPTZ updated_at "DEFAULT NOW()"
+    }
+
+    ohs_specialist_company_assignments {
+        UUID id PK
+        UUID ohs_specialist_user_id FK "NOT NULL, to users.id"
+        UUID company_id FK "NOT NULL, to companies.id"
+        UUID tenant_id FK "NOT NULL, to tenants.id"
+        TIMESTAMPTZ created_at "DEFAULT NOW()"
+        TEXT unique_constraint "UNIQUE (ohs_specialist_user_id, company_id)"
+    }
+
+    doctor_company_assignments {
+        UUID id PK
+        UUID doctor_user_id FK "NOT NULL, to users.id"
+        UUID company_id FK "NOT NULL, to companies.id"
+        UUID tenant_id FK "NOT NULL, to tenants.id"
+        TIMESTAMPTZ created_at "DEFAULT NOW()"
+        TEXT unique_constraint "UNIQUE (doctor_user_id, company_id)"
+    }
+
+    subscription_plans {
+        UUID id PK
+        TEXT name "NOT NULL, UNIQUE"
+        TEXT description
+        NUMERIC_10_2_ price_monthly "NOT NULL"
+        VARCHAR_3_ currency "NOT NULL DEFAULT 'USD'"
+        subscription_plan_status status "NOT NULL DEFAULT 'active'"
+        INTEGER max_companies
+        INTEGER max_employees_total
+        INTEGER max_doctors
+        INTEGER max_ohs_specialists
+        INTEGER live_session_time_limit_minutes
+        INTEGER storage_limit_gb
+        TIMESTAMPTZ created_at "DEFAULT NOW()"
+        TIMESTAMPTZ updated_at "DEFAULT NOW()"
+    }
+
+    tenant_subscriptions {
+        UUID id PK
+        UUID tenant_id FK "NOT NULL, UNIQUE, to tenants.id"
+        UUID plan_id FK "NOT NULL, to subscription_plans.id"
+        tenant_subscription_status status "NOT NULL DEFAULT 'trialing'"
+        TIMESTAMPTZ start_date "NOT NULL DEFAULT NOW()"
+        TIMESTAMPTZ end_date
+        TIMESTAMPTZ trial_ends_at
+        TEXT payment_gateway_customer_id
+        TEXT payment_gateway_subscription_id
+        INTEGER custom_max_companies
+        INTEGER custom_max_employees_total
+        INTEGER custom_max_doctors
+        INTEGER custom_max_ohs_specialists
+        INTEGER custom_live_session_time_limit_minutes
+        INTEGER custom_storage_limit_gb
+        TIMESTAMPTZ created_at "DEFAULT NOW()"
+        TIMESTAMPTZ updated_at "DEFAULT NOW()"
+    }
+
+    professional_availabilities {
+        UUID id PK
+        UUID professional_user_id FK "NOT NULL, to users.id"
+        UUID tenant_id FK "NOT NULL, to tenants.id"
+        TIMESTAMPTZ start_time "NOT NULL"
+        TIMESTAMPTZ end_time "NOT NULL"
+        TIMESTAMPTZ created_at "DEFAULT NOW()"
+    }
+
+    appointments {
+        UUID id PK
+        UUID tenant_id FK "NOT NULL, to tenants.id"
+        UUID company_id FK "NOT NULL, to companies.id"
+        UUID employee_user_id FK "NOT NULL, to users.id"
+        UUID professional_user_id FK "NOT NULL, to users.id"
+        appointment_type appointment_type "NOT NULL DEFAULT 'ohs_consultation'"
+        TIMESTAMPTZ start_time "NOT NULL"
+        TIMESTAMPTZ end_time "NOT NULL"
+        appointment_status status "NOT NULL DEFAULT 'pending'"
+        TEXT reason_for_visit
+        TEXT notes_by_professional
+        TEXT call_session_id
+        TIMESTAMPTZ created_at "DEFAULT NOW()"
+        TIMESTAMPTZ updated_at "DEFAULT NOW()"
+    }
+
+    training_sessions {
+        UUID id PK
+        UUID tenant_id FK "NOT NULL, to tenants.id"
+        UUID host_user_id FK "NOT NULL, to users.id"
+        TEXT title "NOT NULL"
+        TEXT description
+        training_type training_type "NOT NULL DEFAULT 'live_webinar'"
+        training_status status "NOT NULL DEFAULT 'scheduled'"
+        TIMESTAMPTZ start_time "NOT NULL"
+        TIMESTAMPTZ end_time "NOT NULL"
+        JSONB stream_details
+        INTEGER max_participants
+        TIMESTAMPTZ created_at "DEFAULT NOW()"
+        TIMESTAMPTZ updated_at "DEFAULT NOW()"
+    }
+
+    training_materials {
+        UUID id PK
+        UUID tenant_id FK "NOT NULL, to tenants.id"
+        UUID uploader_user_id FK "NOT NULL, to users.id"
+        UUID training_session_id FK "nullable, to training_sessions.id"
+        TEXT title "NOT NULL"
+        TEXT description
+        training_material_type material_type "NOT NULL"
+        TEXT file_s3_key "NOT NULL"
+        BIGINT file_size_bytes
+        TIMESTAMPTZ created_at "DEFAULT NOW()"
+        TIMESTAMPTZ updated_at "DEFAULT NOW()"
+    }
+
+    training_enrollments {
+        UUID id PK
+        UUID tenant_id FK "NOT NULL, to tenants.id"
+        UUID training_session_id FK "NOT NULL, to training_sessions.id"
+        UUID employee_user_id FK "NOT NULL, to users.id"
+        UUID company_id FK "NOT NULL, to companies.id"
+        participant_status status "NOT NULL DEFAULT 'registered'"
+        TIMESTAMPTZ enrolled_at "DEFAULT NOW()"
+        BOOLEAN attended "DEFAULT FALSE"
+        TIMESTAMPTZ completion_date
+        TEXT certificate_s3_key
+        SMALLINT feedback_rating
+        TEXT feedback_text
+        TIMESTAMPTZ created_at "DEFAULT NOW()"
+        TIMESTAMPTZ updated_at "DEFAULT NOW()"
+        TEXT unique_constraint "UNIQUE (training_session_id, employee_user_id)"
+    }
+
+    training_quizzes {
+        UUID id PK
+        UUID tenant_id FK "NOT NULL, to tenants.id"
+        UUID training_session_id FK "NOT NULL, to training_sessions.id"
+        TEXT title "NOT NULL"
+        TEXT description
+        UUID created_by_user_id FK "NOT NULL, to users.id"
+        TIMESTAMPTZ created_at "DEFAULT NOW()"
+        TIMESTAMPTZ updated_at "DEFAULT NOW()"
+    }
+
+    quiz_questions {
+        UUID id PK
+        UUID quiz_id FK "NOT NULL, to training_quizzes.id"
+        UUID tenant_id FK "NOT NULL, to tenants.id (denormalized)"
+        TEXT question_text "NOT NULL"
+        TEXT question_type "NOT NULL"
+        JSONB options
+        TEXT correct_answer_key
+        INTEGER points "DEFAULT 1"
+        TIMESTAMPTZ created_at "DEFAULT NOW()"
+        TIMESTAMPTZ updated_at "DEFAULT NOW()"
+    }
+
+    quiz_attempts {
+        UUID id PK
+        UUID quiz_id FK "NOT NULL, to training_quizzes.id"
+        UUID enrollment_id FK "UNIQUE, nullable, to training_enrollments.id"
+        UUID employee_user_id FK "NOT NULL, to users.id"
+        UUID tenant_id FK "NOT NULL, to tenants.id (denormalized)"
+        UUID company_id FK "NOT NULL, to companies.id (denormalized)"
+        TIMESTAMPTZ started_at "DEFAULT NOW()"
+        TIMESTAMPTZ completed_at
+        NUMERIC_5_2_ score
+        BOOLEAN passed
+        TIMESTAMPTZ created_at "DEFAULT NOW()"
+        TIMESTAMPTZ updated_at "DEFAULT NOW()"
+    }
+
+    quiz_attempt_answers {
+        UUID id PK
+        UUID attempt_id FK "NOT NULL, to quiz_attempts.id"
+        UUID question_id FK "NOT NULL, to quiz_questions.id"
+        UUID tenant_id FK "NOT NULL, to tenants.id (denormalized)"
+        TEXT answer_key
+        TEXT answer_text
+        BOOLEAN is_correct
+        TIMESTAMPTZ submitted_at "DEFAULT NOW()"
+    }
+
+    call_logs {
+        UUID id PK
+        UUID tenant_id FK "NOT NULL, to tenants.id"
+        UUID appointment_id FK "UNIQUE, nullable, to appointments.id"
+        UUID initiator_user_id FK "NOT NULL, to users.id"
+        UUID receiver_user_id FK "NOT NULL, to users.id"
+        TIMESTAMPTZ start_time "NOT NULL"
+        TIMESTAMPTZ end_time
+        INTEGER duration_seconds
+        JSONB mediasoup_session_info
+        TIMESTAMPTZ created_at "DEFAULT NOW()"
+    }
+
+    session_chats {
+        UUID id PK
+        UUID tenant_id FK "NOT NULL, to tenants.id"
+        UUID training_session_id FK "UNIQUE, nullable, to training_sessions.id"
+        UUID appointment_id FK "UNIQUE, nullable, to appointments.id"
+        BOOLEAN is_active "DEFAULT TRUE"
+        TIMESTAMPTZ created_at "DEFAULT NOW()"
+        TIMESTAMPTZ updated_at "DEFAULT NOW()"
+        TEXT check_constraint "CHK ((training_session_id IS NOT NULL AND appointment_id IS NULL) OR (training_session_id IS NULL AND appointment_id IS NOT NULL))"
+    }
+
+    chat_messages {
+        UUID id PK
+        UUID chat_id FK "NOT NULL, to session_chats.id"
+        UUID sender_user_id FK "NOT NULL, to users.id"
+        UUID tenant_id FK "NOT NULL, to tenants.id (denormalized)"
+        TEXT content "NOT NULL"
+        TIMESTAMPTZ sent_at "DEFAULT NOW()"
+        BOOLEAN is_deleted "DEFAULT FALSE"
+    }
+
+    safety_reports {
+        UUID id PK
+        UUID tenant_id FK "NOT NULL, to tenants.id"
+        UUID company_id FK "NOT NULL, to companies.id"
+        UUID reporter_user_id FK "nullable, to users.id"
+        BOOLEAN is_anonymous "DEFAULT FALSE"
+        TEXT title "NOT NULL"
+        TEXT description "NOT NULL"
+        TEXT location_description
+        report_status status "NOT NULL DEFAULT 'open'"
+        report_priority priority "NOT NULL DEFAULT 'low'"
+        JSONB attachments
+        UUID assigned_to_user_id FK "nullable, to users.id"
+        TIMESTAMPTZ assigned_at
+        TEXT resolution_details
+        TIMESTAMPTZ created_at "DEFAULT NOW()"
+        TIMESTAMPTZ updated_at "DEFAULT NOW()"
+    }
+
+    risk_analysis_templates {
+        UUID id PK
+        UUID tenant_id FK "NOT NULL, to tenants.id"
+        UUID creator_user_id FK "NOT NULL, to users.id"
+        TEXT name "NOT NULL"
+        TEXT description
+        JSONB structure_json "NOT NULL"
+        TIMESTAMPTZ created_at "DEFAULT NOW()"
+        TIMESTAMPTZ updated_at "DEFAULT NOW()"
+    }
+
+    risk_analysis_checks {
+        UUID id PK
+        UUID tenant_id FK "NOT NULL, to tenants.id"
+        UUID company_id FK "NOT NULL, to companies.id"
+        UUID template_id FK "NOT NULL, to risk_analysis_templates.id"
+        UUID checker_user_id FK "NOT NULL, to users.id"
+        risk_analysis_check_status status "NOT NULL DEFAULT 'draft'"
+        JSONB data_json "NOT NULL"
+        NUMERIC_5_2_ overall_risk_score
+        TEXT recommendations
+        TIMESTAMPTZ checked_at "DEFAULT NOW()"
+        TIMESTAMPTZ updated_at "DEFAULT NOW()"
+    }
+
+    notifications {
+        UUID id PK
+        UUID user_id FK "NOT NULL, to users.id"
+        UUID tenant_id FK "nullable, to tenants.id"
+        notification_type notification_type "NOT NULL"
+        TEXT title "NOT NULL"
+        TEXT message "NOT NULL"
+        UUID related_entity_id
+        TEXT related_entity_type
+        BOOLEAN is_read "DEFAULT FALSE"
+        TIMESTAMPTZ read_at
+        TIMESTAMPTZ created_at "DEFAULT NOW()"
+    }
+
+    user_push_tokens {
+        UUID id PK
+        UUID user_id FK "NOT NULL, to users.id"
+        TEXT token "NOT NULL"
+        TEXT device_name
+        TIMESTAMPTZ last_used_at "DEFAULT NOW()"
+        TIMESTAMPTZ created_at "DEFAULT NOW()"
+        TEXT unique_constraint "UNIQUE (user_id, token)"
+    }
+
+    system_settings {
+        UUID id PK
+        UUID tenant_id FK "UNIQUE, nullable, to tenants.id"
+        TEXT setting_key "NOT NULL"
+        JSONB setting_value "NOT NULL"
+        TEXT description
+        TIMESTAMPTZ created_at "DEFAULT NOW()"
+        TIMESTAMPTZ updated_at "DEFAULT NOW()"
+        TEXT unique_constraint "UNIQUE (tenant_id, setting_key)"
+    }
+
+    %% Relationships
+    users ||--o{ tenants : "owner_user_id"
+    tenants ||--o{ users : "tenant_id"
+    tenants ||--o{ companies : "tenant_id"
+    users ||--|| user_profiles : "user_id"
+    companies ||--o{ users : "company_id"
+    companies ||--o{ user_profiles : "company_id"
+    companies ||--|| company_profiles : "company_id"
+
+    users ||--o{ user_tenant_context_roles : "user_id"
+    tenants ||--o{ user_tenant_context_roles : "tenant_id"
+    companies ||--o{ user_tenant_context_roles : "company_id"
+
+    users ||--o{ ohs_specialist_company_assignments : "ohs_specialist_user_id"
+    companies ||--o{ ohs_specialist_company_assignments : "company_id"
+    tenants ||--o{ ohs_specialist_company_assignments : "tenant_id"
+
+    users ||--o{ doctor_company_assignments : "doctor_user_id"
+    companies ||--o{ doctor_company_assignments : "company_id"
+    tenants ||--o{ doctor_company_assignments : "tenant_id"
+
+    subscription_plans ||--o{ tenant_subscriptions : "plan_id"
+    tenants ||--|| tenant_subscriptions : "tenant_id"
+
+    users ||--o{ professional_availabilities : "professional_user_id"
+    tenants ||--o{ professional_availabilities : "tenant_id"
+
+    tenants ||--o{ appointments : "tenant_id"
+    companies ||--o{ appointments : "company_id"
+    users ||--o{ appointments : "employee_user_id"
+    users ||--o{ appointments : "professional_user_id (PROFESSIONAL)"
+
+    tenants ||--o{ training_sessions : "tenant_id"
+    users ||--o{ training_sessions : "host_user_id"
+    training_sessions ||--o{ training_materials : "training_session_id"
+    tenants ||--o{ training_materials : "tenant_id"
+    users ||--o{ training_materials : "uploader_user_id"
+
+    training_sessions ||--o{ training_enrollments : "training_session_id"
+    users ||--o{ training_enrollments : "employee_user_id"
+    companies ||--o{ training_enrollments : "company_id"
+    tenants ||--o{ training_enrollments : "tenant_id"
+
+    training_sessions ||--o{ training_quizzes : "training_session_id"
+    users ||--o{ training_quizzes : "created_by_user_id"
+    tenants ||--o{ training_quizzes : "tenant_id"
+
+    training_quizzes ||--o{ quiz_questions : "quiz_id"
+    tenants ||--o{ quiz_questions : "tenant_id"
+
+    training_quizzes ||--o{ quiz_attempts : "quiz_id"
+    training_enrollments }o--|| quiz_attempts : "enrollment_id"
+    users ||--o{ quiz_attempts : "employee_user_id"
+    companies ||--o{ quiz_attempts : "company_id"
+    tenants ||--o{ quiz_attempts : "tenant_id"
+
+    quiz_attempts ||--o{ quiz_attempt_answers : "attempt_id"
+    quiz_questions ||--o{ quiz_attempt_answers : "question_id"
+    tenants ||--o{ quiz_attempt_answers : "tenant_id"
+
+    appointments }o--|| call_logs : "appointment_id"
+    users ||--o{ call_logs : "initiator_user_id"
+    users ||--o{ call_logs : "receiver_user_id"
+    tenants ||--o{ call_logs : "tenant_id"
+
+    training_sessions }o--|| session_chats : "training_session_id"
+    appointments }o--|| session_chats : "appointment_id"
+    tenants ||--o{ session_chats : "tenant_id"
+    session_chats ||--o{ chat_messages : "chat_id"
+    users ||--o{ chat_messages : "sender_user_id"
+    tenants ||--o{ chat_messages : "tenant_id"
+
+    tenants ||--o{ safety_reports : "tenant_id"
+    companies ||--o{ safety_reports : "company_id"
+    users ||--o{ safety_reports : "reporter_user_id"
+    users ||--o{ safety_reports : "assigned_to_user_id (ASSIGNEE)"
+
+    tenants ||--o{ risk_analysis_templates : "tenant_id"
+    users ||--o{ risk_analysis_templates : "creator_user_id"
+    risk_analysis_templates ||--o{ risk_analysis_checks : "template_id"
+    companies ||--o{ risk_analysis_checks : "company_id"
+    users ||--o{ risk_analysis_checks : "checker_user_id"
+    tenants ||--o{ risk_analysis_checks : "tenant_id"
+
+    users ||--o{ notifications : "user_id"
+    tenants ||--o{ notifications : "tenant_id"
+
+    users ||--o{ user_push_tokens : "user_id"
+
+    tenants }o--|| system_settings : "tenant_id"
+
+    %% Enum types (for reference, as Mermaid ER doesn't directly render these as types)
+    %% user_role: 'super_admin', 'tenant_admin', 'ohs_specialist', 'doctor', 'employee'
+    %% user_status: 'active', 'inactive', 'pending', 'suspended'
+    %% company_status: 'active', 'inactive', 'suspended'
+    %% appointment_status: 'pending', 'confirmed', 'cancelled_by_professional', 'cancelled_by_employee', 'completed', 'no_show'
+    %% appointment_type: 'ohs_consultation', 'medical_checkup'
+    %% training_status: 'scheduled', 'in_progress', 'completed', 'cancelled'
+    %% training_material_type: 'video', 'pdf', 'slides', 'other'
+    %% training_type: 'live_webinar', 'recorded_video', 'document', 'quiz'
+    %% participant_status: 'registered', 'attended', 'completed', 'no_show'
+    %% report_status: 'open', 'in_review', 'resolved', 'archived'
+    %% report_priority: 'low', 'medium', 'high', 'critical'
+    %% risk_analysis_check_status: 'draft', 'submitted', 'in_review', 'completed', 'archived'
+    %% notification_type: 'appointment_reminder', ..., 'new_message'
+    %% subscription_plan_status: 'active', 'deprecated', 'inactive'
+    %% tenant_subscription_status: 'active', 'past_due', 'cancelled', 'expired', 'trialing'
