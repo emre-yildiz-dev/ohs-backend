@@ -375,9 +375,9 @@ CREATE TABLE appointments (
     CHECK (end_time > start_time)
 );
 ALTER TABLE appointments ENABLE ROW LEVEL SECURITY;
+CREATE POLICY view_appointments_for_super_admin ON appointments FOR SELECT USING ('super_admin' = ANY(get_current_user_roles()));
 CREATE POLICY manage_appointments_for_participants ON appointments FOR ALL USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid AND ((employee_user_id = current_setting('app.current_user_id', true)::uuid AND 'employee' = ANY(get_current_user_roles())) OR (professional_user_id = current_setting('app.current_user_id', true)::uuid AND (get_current_user_roles() && ARRAY['ohs_specialist', 'doctor']::text[]))));
 CREATE POLICY view_appointments_for_tenant_admin ON appointments FOR SELECT USING ('tenant_admin' = ANY(get_current_user_roles()) AND tenant_id = current_setting('app.current_tenant_id', true)::uuid);
-CREATE POLICY view_appointments_for_super_admin ON appointments FOR SELECT USING ('super_admin' = ANY(get_current_user_roles()));
 CREATE POLICY view_appointments_for_assigned_ohs ON appointments FOR SELECT USING ('ohs_specialist' = ANY(get_current_user_roles()) AND tenant_id = current_setting('app.current_tenant_id', true)::uuid AND professional_user_id = current_setting('app.current_user_id', true)::uuid AND EXISTS (SELECT 1 FROM ohs_specialist_company_assignments osca WHERE osca.ohs_specialist_user_id = appointments.professional_user_id AND osca.company_id = appointments.company_id));
 CREATE POLICY view_appointments_for_assigned_doctor ON appointments FOR SELECT USING ('doctor' = ANY(get_current_user_roles()) AND tenant_id = current_setting('app.current_tenant_id', true)::uuid AND professional_user_id = current_setting('app.current_user_id', true)::uuid AND EXISTS (SELECT 1 FROM doctor_company_assignments dca WHERE dca.doctor_user_id = appointments.professional_user_id AND dca.company_id = appointments.company_id));
 
