@@ -5,6 +5,7 @@ use validator::Validate;
 
 #[derive(Debug, Clone, PartialEq, Eq, sqlx::Type, Serialize, Deserialize)]
 #[sqlx(type_name = "risk_analysis_check_status", rename_all = "snake_case")]
+#[allow(unused)]
 pub enum RiskAnalysisCheckStatus {
     Draft,
     Submitted,
@@ -41,6 +42,7 @@ pub struct RiskAnalysisCheck {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct NewRiskAnalysisTemplate {
     pub tenant_id: Uuid,
     pub creator_user_id: Uuid,
@@ -51,6 +53,7 @@ pub struct NewRiskAnalysisTemplate {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct UpdateRiskAnalysisTemplate {
     pub name: Option<String>,
     pub description: Option<String>,
@@ -58,6 +61,7 @@ pub struct UpdateRiskAnalysisTemplate {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct NewRiskAnalysisCheck {
     pub tenant_id: Uuid,
     pub company_id: Uuid,
@@ -70,6 +74,7 @@ pub struct NewRiskAnalysisCheck {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct UpdateRiskAnalysisCheck {
     pub status: Option<RiskAnalysisCheckStatus>,
     pub data_json: Option<serde_json::Value>,

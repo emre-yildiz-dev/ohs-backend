@@ -27,26 +27,20 @@ pub enum UserStatus {
 #[allow(unused)]
 pub struct User {
     pub id: Uuid,
+    pub tenant_id: Option<Uuid>,
     pub email: String,
     #[serde(skip_serializing)]
     pub password_hash: String,
-    pub first_name: String,
-    pub last_name: String,
-    pub role: UserRole,
     pub status: UserStatus,
     pub company_id: Option<Uuid>,
-    pub department: Option<String>,
-    pub job_title: Option<String>,
-    pub profile_image_url: Option<String>,
-    pub phone_number: Option<String>,
     pub created_at: OffsetDateTime,
     pub updated_at: OffsetDateTime,
-    pub last_login_at: Option<OffsetDateTime>,
 }
 
 #[derive(Debug, Deserialize, Validate)]
 #[allow(unused)]
 pub struct NewUser {
+    pub tenant_id: Uuid,
     #[validate(email)]
     pub email: String,
     pub password: SecretBox<String>,

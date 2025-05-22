@@ -15,6 +15,7 @@ pub struct Tenant {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct NewTenant {
     #[validate(length(min = 1, message = "Name must not be empty"))]
     pub name: String,
@@ -24,6 +25,7 @@ pub struct NewTenant {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct UpdateTenant {
     pub name: Option<String>,
     pub description: Option<String>,

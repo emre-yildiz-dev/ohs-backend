@@ -58,6 +58,7 @@ pub struct QuizAttemptAnswer {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct NewTrainingQuiz {
     pub tenant_id: Uuid,
     pub training_session_id: Uuid,
@@ -68,6 +69,7 @@ pub struct NewTrainingQuiz {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct NewQuizQuestion {
     pub quiz_id: Uuid,
     pub tenant_id: Uuid,
@@ -80,6 +82,7 @@ pub struct NewQuizQuestion {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct NewQuizAttempt {
     pub quiz_id: Uuid,
     pub enrollment_id: Option<Uuid>,
@@ -89,6 +92,7 @@ pub struct NewQuizAttempt {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct NewQuizAttemptAnswer {
     pub attempt_id: Uuid,
     pub question_id: Uuid,
@@ -98,6 +102,7 @@ pub struct NewQuizAttemptAnswer {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct UpdateQuizAttempt {
     pub completed_at: Option<OffsetDateTime>,
     pub score: Option<f64>,
@@ -105,6 +110,7 @@ pub struct UpdateQuizAttempt {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct UpdateQuizQuestion {
     pub question_text: Option<String>,
     pub question_type: Option<String>,

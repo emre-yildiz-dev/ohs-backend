@@ -93,8 +93,8 @@ CREATE TABLE tenants (
     description TEXT,
     owner_user_id UUID, -- FK to users table, added after users table is created
     is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
 -- Users: All individuals interacting with the system
@@ -105,11 +105,8 @@ CREATE TABLE users (
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     status user_status NOT NULL DEFAULT 'pending',
-    password_reset_token TEXT,
-    password_reset_expires_at TIMESTAMPTZ,
-    last_login_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
 -- Add FK constraint from tenants.owner_user_id to users.id (AFTER users table is created)
@@ -122,8 +119,8 @@ CREATE TABLE companies (
     name TEXT NOT NULL,
     description TEXT,
     status company_status NOT NULL DEFAULT 'active',
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
 -- Add FK constraints from users.company_id to companies.id (AFTER companies table is created)
@@ -146,8 +143,8 @@ CREATE TABLE user_profiles (
     state TEXT,
     zip_code TEXT,
     country TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
 -- User Tenant Context Roles: Defines roles of users within specific tenants or companies
@@ -157,7 +154,7 @@ CREATE TABLE user_tenant_context_roles (
     role user_role NOT NULL,
     tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE, -- Null for SUPER_ADMIN
     company_id UUID REFERENCES companies(id) ON DELETE CASCADE, -- Relevant for EMPLOYEE role or specific professional assignments
-    created_at TIMESTAMPTZ DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     UNIQUE (user_id, role, tenant_id, company_id)
 );
 
@@ -172,8 +169,8 @@ CREATE TABLE company_profiles (
     state TEXT,
     zip_code TEXT,
     country TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
 -- OHS Specialist Company Assignments: Links OHS Specialists to companies they serve
@@ -182,7 +179,7 @@ CREATE TABLE ohs_specialist_company_assignments (
     ohs_specialist_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE, -- Denormalized from company.tenant_id for RLS
-    created_at TIMESTAMPTZ DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     UNIQUE (ohs_specialist_user_id, company_id)
 );
 
@@ -192,7 +189,7 @@ CREATE TABLE doctor_company_assignments (
     doctor_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE, -- Denormalized from company.tenant_id for RLS
-    created_at TIMESTAMPTZ DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     UNIQUE (doctor_user_id, company_id)
 );
 
@@ -214,8 +211,8 @@ CREATE TABLE subscription_plans (
     max_ohs_specialists INTEGER,
     live_session_time_limit_minutes INTEGER,
     storage_limit_gb INTEGER,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
 -- Tenant Subscriptions: Links tenants to their active subscription plan
@@ -235,8 +232,8 @@ CREATE TABLE tenant_subscriptions (
     custom_max_ohs_specialists INTEGER,
     custom_live_session_time_limit_minutes INTEGER,
     custom_storage_limit_gb INTEGER,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
 --------------------------------------------------------------------------------
@@ -309,7 +306,7 @@ CREATE TABLE professional_availabilities (
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     start_time TIMESTAMPTZ NOT NULL,
     end_time TIMESTAMPTZ NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     CHECK (end_time > start_time)
 );
 
@@ -327,8 +324,8 @@ CREATE TABLE appointments (
     reason_for_visit TEXT,
     notes_by_professional TEXT,
     call_session_id TEXT, -- Identifier for the RTC session
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     CHECK (end_time > start_time)
 );
 
@@ -349,8 +346,8 @@ CREATE TABLE training_sessions (
     end_time TIMESTAMPTZ NOT NULL,
     stream_details JSONB, -- Details for live streaming (e.g., Mediasoup room ID)
     max_participants INTEGER,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
 -- Training Materials: Files and resources associated with training
@@ -364,8 +361,8 @@ CREATE TABLE training_materials (
     material_type training_material_type NOT NULL,
     file_s3_key TEXT NOT NULL, -- Key for the file in S3 storage
     file_size_bytes BIGINT,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
 -- Training Enrollments: Tracks employee participation in training sessions
@@ -382,8 +379,8 @@ CREATE TABLE training_enrollments (
     certificate_s3_key TEXT, -- S3 key for digital certificate
     feedback_rating SMALLINT,
     feedback_text TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     UNIQUE (training_session_id, employee_user_id)
 );
 
@@ -395,8 +392,8 @@ CREATE TABLE training_quizzes (
     title TEXT NOT NULL,
     description TEXT,
     created_by_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, -- User who created the quiz
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
 -- Quiz Questions: Individual questions within a quiz
@@ -409,8 +406,8 @@ CREATE TABLE quiz_questions (
     options JSONB, -- For multiple choice options
     correct_answer_key TEXT, -- Key(s) for the correct answer
     points INTEGER DEFAULT 1,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
 -- Quiz Attempts: Records of employees taking quizzes
@@ -425,8 +422,8 @@ CREATE TABLE quiz_attempts (
     completed_at TIMESTAMPTZ,
     score NUMERIC(5,2),
     passed BOOLEAN,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
 -- Quiz Attempt Answers: Specific answers given by employees during a quiz attempt
@@ -456,7 +453,7 @@ CREATE TABLE call_logs (
     end_time TIMESTAMPTZ,
     duration_seconds INTEGER,
     mediasoup_session_info JSONB, -- Technical details from Mediasoup
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
 -- Session Chats: Represents a chat instance for a training session or appointment
@@ -466,8 +463,8 @@ CREATE TABLE session_chats (
     training_session_id UUID UNIQUE REFERENCES training_sessions(id) ON DELETE CASCADE,
     appointment_id UUID UNIQUE REFERENCES appointments(id) ON DELETE CASCADE,
     is_active BOOLEAN DEFAULT TRUE, -- To disable a chat if needed
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     CONSTRAINT chk_chat_link CHECK ((training_session_id IS NOT NULL AND appointment_id IS NULL) OR (training_session_id IS NULL AND appointment_id IS NOT NULL))
 );
 
@@ -478,7 +475,7 @@ CREATE TABLE chat_messages (
     sender_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE, -- Denormalized for RLS efficiency
     content TEXT NOT NULL,
-    sent_at TIMESTAMPTZ DEFAULT NOW(),
+    sent_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     is_deleted BOOLEAN DEFAULT FALSE -- For soft deletes
 );
 
@@ -502,8 +499,8 @@ CREATE TABLE safety_reports (
     assigned_to_user_id UUID REFERENCES users(id) ON DELETE SET NULL, -- OHS Specialist assigned to the report
     assigned_at TIMESTAMPTZ,
     resolution_details TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
 -- Risk Analysis Templates: Reusable templates for conducting risk analyses
@@ -514,8 +511,8 @@ CREATE TABLE risk_analysis_templates (
     name TEXT NOT NULL,
     description TEXT,
     structure_json JSONB NOT NULL, -- Defines the structure of the risk analysis
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
 -- Risk Analysis Checks: Instances of completed risk analyses based on templates
@@ -549,7 +546,7 @@ CREATE TABLE notifications (
     related_entity_type TEXT, -- Type of the related entity (e.g., 'APPOINTMENT')
     is_read BOOLEAN DEFAULT FALSE,
     read_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
 -- User Push Tokens: Stores Expo Push Notification tokens for user devices
@@ -559,7 +556,7 @@ CREATE TABLE user_push_tokens (
     token TEXT NOT NULL, -- The Expo Push Token string
     device_name TEXT,    -- Optional, user-friendly name for the device
     last_used_at TIMESTAMPTZ DEFAULT NOW(),
-    created_at TIMESTAMPTZ DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     UNIQUE (user_id, token)
 );
 
@@ -574,8 +571,8 @@ CREATE TABLE system_settings (
     setting_key TEXT NOT NULL,
     setting_value JSONB NOT NULL,
     description TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     UNIQUE (tenant_id, setting_key)
 );
 

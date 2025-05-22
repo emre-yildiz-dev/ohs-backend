@@ -31,6 +31,7 @@ pub struct TrainingEnrollment {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct NewTrainingEnrollment {
     pub tenant_id: Uuid,
     pub training_session_id: Uuid,
@@ -39,6 +40,7 @@ pub struct NewTrainingEnrollment {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct UpdateTrainingEnrollment {
     pub status: Option<ParticipantStatus>,
     pub attended: Option<bool>,
