@@ -94,12 +94,8 @@ The application will be available at `http://localhost:8000` (or as configured b
 This method runs the application along with its dependencies like PostgreSQL and Redis, all containerized.
 
 1.  **Ensure Docker and Docker Compose are installed.**
-2.  **Database Setup & Migrations**:
-    The `./setup-db.sh` script is designed to initialize the database and run migrations. It's recommended to run this script first. It uses Docker Compose to start the PostgreSQL service and applies migrations, ensuring the database is ready.
-    ```bash
-    ./setup-db.sh
-    ```
-3.  **Start all services**:
+
+2.  **Start all services**:
     After the database is set up and migrated by the script above, start all services (including the application, Redis, etc.) defined in your `docker-compose.yml` file:
     ```bash
     docker-compose up -d
