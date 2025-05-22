@@ -14,6 +14,7 @@ pub struct UserPushToken {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct NewUserPushToken {
     pub user_id: Uuid,
     #[validate(length(min = 1))]
@@ -22,6 +23,7 @@ pub struct NewUserPushToken {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct UpdateUserPushToken {
     pub device_name: Option<String>,
     pub last_used_at: Option<OffsetDateTime>,

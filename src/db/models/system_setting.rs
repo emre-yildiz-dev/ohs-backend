@@ -4,6 +4,7 @@ use time::OffsetDateTime;
 use validator::Validate;
 
 #[derive(Debug, Clone, sqlx::FromRow, Serialize, Deserialize)]
+#[allow(unused)]
 pub struct SystemSetting {
     pub id: Uuid,
     pub tenant_id: Option<Uuid>,
@@ -15,6 +16,7 @@ pub struct SystemSetting {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct NewSystemSetting {
     pub tenant_id: Option<Uuid>,
     #[validate(length(min = 1))]
@@ -24,6 +26,7 @@ pub struct NewSystemSetting {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct UpdateSystemSetting {
     pub setting_value: Option<serde_json::Value>,
     pub description: Option<String>,

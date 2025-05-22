@@ -40,6 +40,7 @@ pub struct SubscriptionPlan {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct NewSubscriptionPlan {
     #[validate(length(min = 1, message = "Name must not be empty"))]
     pub name: String,
@@ -58,6 +59,7 @@ pub struct NewSubscriptionPlan {
 }
 
 #[derive(Debug, Clone, sqlx::FromRow, Serialize, Deserialize)]
+#[allow(unused)]
 pub struct TenantSubscription {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -79,6 +81,7 @@ pub struct TenantSubscription {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct NewTenantSubscription {
     pub tenant_id: Uuid,
     pub plan_id: Uuid,
@@ -97,6 +100,7 @@ pub struct NewTenantSubscription {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct UpdateTenantSubscription {
     pub plan_id: Option<Uuid>,
     pub status: Option<TenantSubscriptionStatus>,

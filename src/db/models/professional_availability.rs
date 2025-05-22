@@ -14,6 +14,7 @@ pub struct ProfessionalAvailability {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct NewProfessionalAvailability {
     pub professional_user_id: Uuid,
     pub tenant_id: Uuid,
@@ -22,6 +23,7 @@ pub struct NewProfessionalAvailability {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct UpdateProfessionalAvailability {
     pub start_time: Option<OffsetDateTime>,
     pub end_time: Option<OffsetDateTime>,

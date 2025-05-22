@@ -37,6 +37,8 @@ pub struct CompanyProfile {
     pub updated_at: OffsetDateTime,
 }
 
+#[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct CompanyDetailsDto {
     pub id: Uuid,
     pub name: String,

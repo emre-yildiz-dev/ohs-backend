@@ -24,6 +24,7 @@ pub struct UserTenantContextRole {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct NewUserTenantContextRole {
     pub user_id: Uuid,
     pub role: UserRole,
@@ -32,6 +33,7 @@ pub struct NewUserTenantContextRole {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct UpdateUserTenantContextRole {
     pub role: Option<UserRole>,
     pub tenant_id: Option<Uuid>,

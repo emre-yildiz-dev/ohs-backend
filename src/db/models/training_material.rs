@@ -28,6 +28,7 @@ pub struct TrainingMaterial {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct NewTrainingMaterial {
     pub tenant_id: Uuid,
     pub uploader_user_id: Uuid,
@@ -41,6 +42,7 @@ pub struct NewTrainingMaterial {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct UpdateTrainingMaterial {
     pub title: Option<String>,
     pub description: Option<String>,

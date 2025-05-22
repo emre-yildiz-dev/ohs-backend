@@ -4,6 +4,7 @@ use time::OffsetDateTime;
 use validator::Validate;
 
 #[derive(Debug, Clone, sqlx::FromRow, Serialize, Deserialize)]
+#[allow(unused)]
 pub struct CallLog {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -18,6 +19,7 @@ pub struct CallLog {
 }
 
 #[derive(Debug, Clone, sqlx::FromRow, Serialize, Deserialize)]
+#[allow(unused)]
 pub struct SessionChat {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -29,6 +31,7 @@ pub struct SessionChat {
 }
 
 #[derive(Debug, Clone, sqlx::FromRow, Serialize, Deserialize)]
+#[allow(unused)]
 pub struct ChatMessage {
     pub id: Uuid,
     pub chat_id: Uuid,
@@ -40,6 +43,7 @@ pub struct ChatMessage {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct NewCallLog {
     pub tenant_id: Uuid,
     pub appointment_id: Option<Uuid>,
@@ -50,12 +54,14 @@ pub struct NewCallLog {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct UpdateCallLog {
     pub end_time: Option<OffsetDateTime>,
     pub duration_seconds: Option<i32>,
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct NewSessionChat {
     pub tenant_id: Uuid,
     pub training_session_id: Option<Uuid>,
@@ -64,11 +70,13 @@ pub struct NewSessionChat {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct UpdateSessionChat {
     pub is_active: Option<bool>,
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct NewChatMessage {
     pub chat_id: Uuid,
     pub sender_user_id: Uuid,
@@ -78,6 +86,7 @@ pub struct NewChatMessage {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct DeleteChatMessage {
     pub is_deleted: bool,
 } 

@@ -7,6 +7,7 @@ use anyhow::Result;
 use crate::config;
 
 pub use error::DatabaseError;
+#[allow(unused)]
 pub use models::*;
 
 /// Initialize the database connection pool

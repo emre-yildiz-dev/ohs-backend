@@ -25,6 +25,7 @@ pub struct UserProfile {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct NewUserProfile {
     pub user_id: Uuid,
     #[validate(length(min = 1, message = "First name must not be empty"))]
@@ -46,6 +47,7 @@ pub struct NewUserProfile {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct UpdateUserProfile {
     pub first_name: Option<String>,
     pub last_name: Option<String>,

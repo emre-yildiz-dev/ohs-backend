@@ -4,6 +4,7 @@ use time::OffsetDateTime;
 use validator::Validate;
 
 #[derive(Debug, Clone, sqlx::FromRow, Serialize, Deserialize)]
+#[allow(unused)]
 pub struct OhsSpecialistCompanyAssignment {
     pub id: Uuid,
     pub ohs_specialist_user_id: Uuid,
@@ -13,6 +14,7 @@ pub struct OhsSpecialistCompanyAssignment {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct NewOhsSpecialistCompanyAssignment {
     pub ohs_specialist_user_id: Uuid,
     pub company_id: Uuid,
@@ -20,6 +22,7 @@ pub struct NewOhsSpecialistCompanyAssignment {
 }
 
 #[derive(Debug, Clone, sqlx::FromRow, Serialize, Deserialize)]
+#[allow(unused)]
 pub struct DoctorCompanyAssignment {
     pub id: Uuid,
     pub doctor_user_id: Uuid,
@@ -29,6 +32,7 @@ pub struct DoctorCompanyAssignment {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct NewDoctorCompanyAssignment {
     pub doctor_user_id: Uuid,
     pub company_id: Uuid,

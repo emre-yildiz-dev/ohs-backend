@@ -39,6 +39,7 @@ pub struct TrainingSession {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct NewTrainingSession {
     pub tenant_id: Uuid,
     pub host_user_id: Uuid,
@@ -53,6 +54,7 @@ pub struct NewTrainingSession {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+#[allow(unused)]
 pub struct UpdateTrainingSession {
     pub title: Option<String>,
     pub description: Option<String>,
