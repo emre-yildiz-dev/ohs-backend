@@ -4,7 +4,6 @@ use tokio::sync::broadcast;
 use crate::config;
 
 #[derive(Clone)]
-#[allow(unused)]
 pub struct AppState {
     pub db: PgPool,
     pub env: config::Config,

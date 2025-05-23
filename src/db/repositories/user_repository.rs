@@ -23,7 +23,7 @@ impl UserRepository {
     ) -> Result<User, Error> {
         let hashed_password = hash_password_placeholder(new_user_data.password.expose_secret())
             .await
-            .map_err(|e| Error::Protocol(format!("Password hashing failed: {}", e).into()))?;
+            .map_err(|e| Error::Protocol(format!("Password hashing failed: {}", e)))?;
 
         // Query database and get raw fields, excluding the role which doesn't exist in the database
         let result = sqlx::query_as!(
@@ -164,7 +164,7 @@ impl UserRepository {
     ) -> Result<(), Error> {
         let hashed_password = hash_password_placeholder(new_password.expose_secret())
             .await
-            .map_err(|e| Error::Protocol(format!("Password hashing failed: {}",e).into()))?;
+            .map_err(|e| Error::Protocol(format!("Password hashing failed: {}",e)))?;
 
         sqlx::query!(
             r#"
