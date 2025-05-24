@@ -1,6 +1,10 @@
 use anyhow::{Context, Result};
 use opentelemetry::{global, KeyValue};
-use opentelemetry_sdk::trace::SdkTracerProvider;
+use opentelemetry_otlp::WithExportConfig;
+use opentelemetry_sdk::{
+    Resource,
+    trace::SdkTracerProvider,
+};
 use std::collections::HashMap;
 use std::time::Duration;
 use tracing::info;
@@ -82,20 +86,47 @@ pub async fn init_telemetry(config: Option<TelemetryConfig>) -> Result<Telemetry
 
 /// Initialize distributed tracing
 async fn init_tracing(config: &TelemetryConfig) -> Result<SdkTracerProvider> {
-    if let Some(_endpoint) = &config.otlp_endpoint {
-        // For now, just create a basic tracer provider
-        // OTLP will be added once we understand the correct 0.30.0 API
-        let tracer_provider = SdkTracerProvider::builder().build();
+    // Create resource with service information
+    let resource = create_resource(config)?;
+
+    if let Some(endpoint) = &config.otlp_endpoint {
+        // Use OTLP exporter for Jaeger (0.29.0 API)
+        let exporter = opentelemetry_otlp::SpanExporter::builder()
+            .with_tonic()
+            .with_endpoint(endpoint)
+            .build()?;
+
+        let tracer_provider = SdkTracerProvider::builder()
+            .with_resource(resource)
+            .with_batch_exporter(exporter)
+            .build();
+
         global::set_tracer_provider(tracer_provider.clone());
-        info!("Basic tracer provider initialized (OTLP endpoint configured but not yet implemented)");
+        info!("Distributed tracing initialized with OTLP exporter to {}", endpoint);
         Ok(tracer_provider)
     } else {
         // For development, create a basic tracer provider
-        let tracer_provider = SdkTracerProvider::builder().build();
+        let tracer_provider = SdkTracerProvider::builder()
+            .with_resource(resource)
+            .build();
+
         global::set_tracer_provider(tracer_provider.clone());
         info!("No OTLP endpoint configured, using console-only tracing");
         Ok(tracer_provider)
     }
+}
+
+/// Create resource with service metadata
+fn create_resource(config: &TelemetryConfig) -> Result<Resource> {
+    let resource = Resource::builder_empty()
+        .with_attributes(vec![
+            KeyValue::new("service.name", config.service_name.clone()),
+            KeyValue::new("service.version", config.service_version.clone()),
+            KeyValue::new("deployment.environment", config.environment.clone()),
+        ])
+        .build();
+
+    Ok(resource)
 }
 
 /// Set up tracing subscriber
