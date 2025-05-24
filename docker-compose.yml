@@ -35,6 +35,43 @@ services:
     networks:
       - ohs_network
 
+  # Jaeger for distributed tracing
+  jaeger:
+    image: jaegertracing/all-in-one:1.58
+    container_name: ohs_jaeger
+    restart: unless-stopped
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "14250:14250"  # gRPC
+      - "14268:14268"  # HTTP
+      - "4317:4317"    # OTLP gRPC
+      - "4318:4318"    # OTLP HTTP
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - JAEGER_DISABLED=false
+    networks:
+      - ohs_network
+
+  # OpenTelemetry Collector (optional - for advanced setups)
+  otel-collector:
+    image: otel/opentelemetry-collector:0.92.0
+    container_name: ohs_otel_collector
+    restart: unless-stopped
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+      - "8888:8888"   # Prometheus metrics
+      - "8889:8889"   # Prometheus exporter metrics
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol/config.yaml
+    command: ["--config=/etc/otelcol/config.yaml"]
+    depends_on:
+      - jaeger
+    networks:
+      - ohs_network
+    profiles:
+      - observability  # Optional service, enable with: docker-compose --profile observability up
+
   coturn:
     image: coturn/coturn:latest
     container_name: ohs_coturn
@@ -67,26 +104,52 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      jaeger:
+        condition: service_started
     environment:
-      # Add any environment variables your Axum app needs
+      # Server Configuration
       SERVER_HOST: 0.0.0.0
       SERVER_PORT: 8000
+      
+      # Database Configuration
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/ohs_db
       DATABASE_MAX_CONNECTIONS: 10
       DATABASE_MIN_CONNECTIONS: 2
+      
+      # Redis Configuration
       REDIS_URL: redis://redis:6379
+      
+      # S3 Storage Configuration
       S3_ENDPOINT: http://garage:3900
       S3_ACCESS_KEY_ID: garage-access-key
       S3_SECRET_ACCESS_KEY: garage-secret-key
       S3_BUCKET_NAME: ohs-bucket
+      
+      # TURN Server Configuration
       TURN_URL_UDP: turn:coturn:3478?transport=udp
       TURN_URL_TCP: turn:coturn:3478?transport=tcp
       TURN_USERNAME: turnuser
       TURN_PASSWORD: turnpassword
+      
+      # Application Configuration
       APP_NAME: "OHS Backend"
       APP_ENVIRONMENT: development
       STATIC_DIR: static
       TEMPLATES_DIR: templates
+      
+      # OpenTelemetry Configuration
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
+      OTEL_SERVICE_NAME: ohs-backend
+      OTEL_SERVICE_VERSION: 0.1.0
+      DEPLOYMENT_ENVIRONMENT: development
+      OTEL_TRACES_ENABLED: true
+      OTEL_METRICS_ENABLED: true
+      OTEL_LOGS_ENABLED: true
+      OTEL_TRACES_SAMPLER: parentbased_traceidratio
+      OTEL_TRACES_SAMPLER_ARG: 1.0
+      OTEL_RESOURCE_ATTRIBUTES: service.name=ohs-backend,service.version=0.1.0,deployment.environment=development
+      
+      # Logging Configuration
       RUST_LOG: debug
     networks:
       - ohs_network

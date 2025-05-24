@@ -1,0 +1,94 @@
+# OpenTelemetry Collector Configuration
+# This config receives OTLP data and exports it to various backends
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+  # Health check receiver
+  internal:
+    collection_interval: 10s
+
+processors:
+  # Batch processor for better performance
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+
+  # Memory limiter to prevent OOM
+  memory_limiter:
+    limit_mib: 256
+
+  # Resource processor to add additional attributes
+  resource:
+    attributes:
+      - key: environment
+        value: "development"
+        action: upsert
+      - key: collector.name
+        value: "otel-collector"
+        action: insert
+
+exporters:
+  # Export traces to Jaeger
+  jaeger:
+    endpoint: jaeger:14250
+    tls:
+      insecure: true
+
+  # Export metrics to Prometheus
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    const_labels:
+      environment: "development"
+
+  # Logging exporter for debugging
+  logging:
+    loglevel: info
+    sampling_initial: 5
+    sampling_thereafter: 200
+
+  # Export logs to console (can be extended to other backends)
+  file:
+    path: /tmp/otel-logs.json
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+  pprof:
+    endpoint: 0.0.0.0:1777
+  zpages:
+    endpoint: 0.0.0.0:55679
+
+service:
+  extensions: [health_check, pprof, zpages]
+  
+  pipelines:
+    # Traces pipeline
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [jaeger, logging]
+
+    # Metrics pipeline
+    metrics:
+      receivers: [otlp, internal]
+      processors: [memory_limiter, resource, batch]
+      exporters: [prometheus, logging]
+
+    # Logs pipeline
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [file, logging]
+
+  telemetry:
+    logs:
+      level: "info"
+    metrics:
+      address: 0.0.0.0:8888 
