@@ -15,6 +15,7 @@ mod error;
 mod app;
 mod telemetry;
 mod middleware;
+mod i18n;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -29,10 +30,16 @@ async fn main() -> anyhow::Result<()> {
     let db_pool = db::init_pool().await?;
     info!("Database connection established");
 
+    // Initialize i18n system
+    let localizer = i18n::init_i18n().await
+        .context("Failed to initialize i18n system")?;
+    let localizer = Arc::new(localizer);
+    info!("i18n system initialized");
+
     let (tx, _rx) = broadcast::channel::<String>(100);
     let ws_broadcaster = Arc::new(Mutex::new(tx));
 
-    let state = AppState::new(db_pool, config.clone(), ws_broadcaster);
+    let state = AppState::new(db_pool, config.clone(), ws_broadcaster, localizer);
 
     let app = create_router(state);
 
