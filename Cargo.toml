@@ -28,10 +28,10 @@ thiserror = "2.0.12"
 rand = "0.9.1"
 
 # OpenTelemetry dependencies - simplified working setup
-opentelemetry = "0.22"
-opentelemetry_sdk = { version = "0.22", features = ["rt-tokio", "metrics"] }
-opentelemetry-otlp = "0.15"
-tracing-opentelemetry = "0.23"
+opentelemetry = "0.30.0"
+opentelemetry_sdk = { version = "0.30.0", features = ["rt-tokio", "metrics"] }
+opentelemetry-otlp = "0.30.0"
+tracing-opentelemetry = "0.30.0"
 tower = "0.5"
 
 [[example]]

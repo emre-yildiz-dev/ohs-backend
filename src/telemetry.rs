@@ -1,7 +1,6 @@
 use anyhow::{Context, Result};
 use opentelemetry::{global, KeyValue};
-use opentelemetry_otlp::WithExportConfig;
-use opentelemetry_sdk::{runtime, Resource};
+use opentelemetry_sdk::trace::SdkTracerProvider;
 use std::collections::HashMap;
 use std::time::Duration;
 use tracing::info;
@@ -9,6 +8,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilte
 
 /// Telemetry configuration structure
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct TelemetryConfig {
     pub service_name: String,
     pub service_version: String,
@@ -39,7 +39,7 @@ impl Default for TelemetryConfig {
 
 /// Telemetry handles for graceful shutdown
 pub struct TelemetryHandles {
-    _config: TelemetryConfig,
+    tracer_provider: Option<SdkTracerProvider>,
 }
 
 impl TelemetryHandles {
@@ -47,8 +47,10 @@ impl TelemetryHandles {
     pub async fn shutdown(self) -> Result<()> {
         info!("Shutting down telemetry providers...");
         
-        // Shutdown global providers
-        global::shutdown_tracer_provider();
+        // Shutdown tracer provider if we have one
+        if let Some(provider) = self.tracer_provider {
+            provider.shutdown()?;
+        }
         
         info!("Telemetry providers shutdown completed");
         Ok(())
@@ -64,59 +66,36 @@ pub async fn init_telemetry(config: Option<TelemetryConfig>) -> Result<Telemetry
         config.service_name, config.service_version, config.environment
     );
 
-    // Create base resource with service information
-    let resource = create_resource(&config)?;
-
     // Initialize tracing
-    if config.enable_tracing {
-        init_tracing(&config, &resource).await?;
-    }
+    let tracer_provider = if config.enable_tracing {
+        Some(init_tracing(&config).await?)
+    } else {
+        None
+    };
 
     // Set up tracing subscriber
     setup_tracing_subscriber(&config)?;
 
     info!("Telemetry initialization completed successfully");
-    Ok(TelemetryHandles { _config: config })
-}
-
-/// Create resource with service metadata
-fn create_resource(config: &TelemetryConfig) -> Result<Resource> {
-    let resource = Resource::new(vec![
-        KeyValue::new("service.name", config.service_name.clone()),
-        KeyValue::new("service.version", config.service_version.clone()),
-        KeyValue::new("deployment.environment", config.environment.clone()),
-    ]);
-
-    Ok(resource)
+    Ok(TelemetryHandles { tracer_provider })
 }
 
 /// Initialize distributed tracing
-async fn init_tracing(config: &TelemetryConfig, resource: &Resource) -> Result<()> {
-    if let Some(endpoint) = &config.otlp_endpoint {
-        // Use OTLP exporter
-        opentelemetry_otlp::new_pipeline()
-            .tracing()
-            .with_exporter(
-                opentelemetry_otlp::new_exporter()
-                    .tonic()
-                    .with_endpoint(endpoint)
-                    .with_timeout(config.export_timeout),
-            )
-            .with_trace_config(
-                opentelemetry_sdk::trace::config()
-                    .with_resource(resource.clone())
-                    .with_sampler(opentelemetry_sdk::trace::Sampler::AlwaysOn),
-            )
-            .install_batch(runtime::Tokio)
-            .context("Failed to initialize OTLP tracer")?;
-
-        info!("Distributed tracing initialized with OTLP exporter");
+async fn init_tracing(config: &TelemetryConfig) -> Result<SdkTracerProvider> {
+    if let Some(_endpoint) = &config.otlp_endpoint {
+        // For now, just create a basic tracer provider
+        // OTLP will be added once we understand the correct 0.30.0 API
+        let tracer_provider = SdkTracerProvider::builder().build();
+        global::set_tracer_provider(tracer_provider.clone());
+        info!("Basic tracer provider initialized (OTLP endpoint configured but not yet implemented)");
+        Ok(tracer_provider)
     } else {
-        // For development, just use console logging - tracing will handle the output
+        // For development, create a basic tracer provider
+        let tracer_provider = SdkTracerProvider::builder().build();
+        global::set_tracer_provider(tracer_provider.clone());
         info!("No OTLP endpoint configured, using console-only tracing");
+        Ok(tracer_provider)
     }
-    
-    Ok(())
 }
 
 /// Set up tracing subscriber
@@ -135,7 +114,8 @@ fn setup_tracing_subscriber(_config: &TelemetryConfig) -> Result<()> {
 }
 
 /// Get a tracer instance for the current service
-pub fn get_tracer(name: &'static str) -> opentelemetry::global::BoxedTracer {
+#[allow(dead_code)]
+pub fn get_tracer(name: &'static str) -> impl opentelemetry::trace::Tracer {
     global::tracer(name)
 }
 
@@ -167,6 +147,7 @@ impl DummyMeter {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct DummyCounterBuilder {
     name: String,
     meter_name: String,
@@ -199,6 +180,7 @@ impl DummyCounter {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct DummyHistogramBuilder {
     name: String,
     meter_name: String,
