@@ -30,10 +30,11 @@ COPY Cargo.lock Cargo.toml ./
 RUN cargo build --release && \
     rm src/*.rs
 
-# Copy the source code, templates, migrations, and SQLx prepared queries
+# Copy the source code, templates, migrations, locales, and SQLx prepared queries
 COPY src ./src
 COPY templates ./templates
 COPY migrations ./migrations
+COPY locales ./locales
 COPY .sqlx ./.sqlx
 
 # Copy the compiled CSS from the css-builder stage
@@ -61,6 +62,8 @@ COPY --from=builder /usr/src/app/ohs-backend/templates /app/templates
 COPY --from=builder /usr/src/app/ohs-backend/static /app/static
 # Copy migrations folder to runtime image
 COPY --from=builder /usr/src/app/ohs-backend/migrations /app/migrations
+# Copy locales folder to runtime image for i18n support
+COPY --from=builder /usr/src/app/ohs-backend/locales /app/locales
 
 # Set ownership
 RUN chown -R app:app /app
