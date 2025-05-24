@@ -144,20 +144,17 @@ pub async fn metrics_middleware(
 
 /// Combined middleware that includes both tracing and metrics
 pub async fn observability_middleware(
+    matched_path: MatchedPath,
     request: Request,
     next: Next,
 ) -> Response {
     let method = request.method().clone();
     let uri = request.uri().clone();
     let headers = request.headers().clone();
+    let start_time = Instant::now();
     
-    // Extract route pattern if available
-    let route = request
-        .extensions()
-        .get::<MatchedPath>()
-        .map(|path| path.as_str())
-        .unwrap_or("unknown")
-        .to_string();
+    // Use the matched path directly
+    let route = matched_path.as_str();
 
     // OpenTelemetry tracing
     let tracer = global::tracer("http-server");
@@ -167,7 +164,7 @@ pub async fn observability_middleware(
         .start(&tracer);
 
     // Set tracing attributes
-    set_span_attributes(&mut span, &method, &uri, &route, &headers);
+    set_span_attributes(&mut span, &method, &uri, route, &headers);
 
     // Metrics setup
     let meter = crate::telemetry::get_meter("http-server");
@@ -180,8 +177,6 @@ pub async fn observability_middleware(
         .f64_histogram("http_request_duration_seconds")
         .with_description("HTTP request duration in seconds")
         .build();
-
-    let start_time = Instant::now();
     
     let tracing_span = info_span!(
         "http_request",
@@ -213,7 +208,7 @@ pub async fn observability_middleware(
     // Record metrics
     let labels = vec![
         KeyValue::new("method", method.to_string()),
-        KeyValue::new("route", route),
+        KeyValue::new("route", route.to_string()),
         KeyValue::new("status_code", status_code.to_string()),
     ];
     
