@@ -63,7 +63,7 @@ services:
       - "8888:8888"   # Prometheus metrics
       - "8889:8889"   # Prometheus exporter metrics
     volumes:
-      - ./otel-collector-config.yaml:/etc/otelcol/config.yaml
+      - ./opentelemetry_config/otel-collector-config.yaml:/etc/otelcol/config.yaml
     command: ["--config=/etc/otelcol/config.yaml"]
     depends_on:
       - jaeger
