@@ -2,7 +2,6 @@ use anyhow::Context;
 use app_state::AppState;
 use dotenvy::dotenv;
 use tracing::info;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use tokio::sync::broadcast;
 use std::sync::{Arc, Mutex};
 use crate::app::create_router;
@@ -14,18 +13,16 @@ mod app_state;
 mod db;
 mod error;
 mod app;
+mod telemetry;
+mod middleware;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     dotenv().ok();
 
-    tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| format!("{}=debug", env!("CARGO_CRATE_NAME")).into()),
-        )
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    // Initialize OpenTelemetry
+    let telemetry_handles = telemetry::init_telemetry(None).await
+        .context("Failed to initialize telemetry")?;
 
     let config = config::init()?;
     
@@ -47,9 +44,24 @@ async fn main() -> anyhow::Result<()> {
         .await
         .context("Failed to bind to address")?;
 
-    axum::serve(listener, app)
-        .await
-        .context("Failed to serve application")?;
+    // Setup graceful shutdown
+    let server = axum::serve(listener, app);
+    
+    tokio::select! {
+        result = server => {
+            if let Err(err) = result {
+                tracing::error!("Server error: {}", err);
+            }
+        }
+        _ = tokio::signal::ctrl_c() => {
+            info!("Received shutdown signal, shutting down gracefully...");
+        }
+    }
 
+    // Shutdown telemetry providers
+    telemetry_handles.shutdown().await
+        .context("Failed to shutdown telemetry")?;
+
+    info!("Application shutdown completed");
     Ok(())
 }

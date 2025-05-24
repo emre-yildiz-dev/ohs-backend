@@ -1,8 +1,9 @@
-use axum::{routing::get, Json, Router};
+use axum::{middleware, routing::get, Json, Router};
 use serde_json::json;
 
 use crate::{
     app_state::AppState,
+    middleware::tracing::observability_middleware,
     modules::admin::routes::admin_routes,
     websocket::websocket_routes,
 };
@@ -26,6 +27,7 @@ pub fn create_router(state: AppState) -> Router {
             "/static",
             tower_http::services::ServeDir::new(static_dir),
         )
+        .layer(middleware::from_fn(observability_middleware))
         .with_state(state)
 }
 
@@ -46,12 +48,16 @@ async fn health_check(
         }
     };
 
+    // Get telemetry health status
+    let telemetry_health = crate::telemetry::telemetry_health_check();
+
     Json(json!({
         "status": "ok",
         "timestamp": chrono::Utc::now().to_rfc3339(),
         "version": env!("CARGO_PKG_VERSION"),
         "services": {
-            "database": db_status
+            "database": db_status,
+            "telemetry": telemetry_health
         }
     }))
 }

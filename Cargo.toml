@@ -26,3 +26,14 @@ argon2 = "0.5.3"
 validator = { version = "0.20.0", features = ["derive"] }
 thiserror = "2.0.12"
 rand = "0.9.1"
+
+# OpenTelemetry dependencies - simplified working setup
+opentelemetry = "0.22"
+opentelemetry_sdk = { version = "0.22", features = ["rt-tokio", "metrics"] }
+opentelemetry-otlp = "0.15"
+tracing-opentelemetry = "0.23"
+tower = "0.5"
+
+[[example]]
+name = "telemetry_demo"
+path = "examples/telemetry_demo.rs"
