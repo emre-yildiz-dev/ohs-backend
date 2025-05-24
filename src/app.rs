@@ -3,8 +3,8 @@ use serde_json::json;
 
 use crate::{
     app_state::AppState,
-    middleware::tracing::observability_middleware,
-    modules::admin::routes::admin_routes,
+    middleware::{tracing::observability_middleware, language_middleware},
+    modules::{admin::routes::admin_routes, i18n::create_i18n_routes},
     websocket::websocket_routes,
 };
 
@@ -23,10 +23,12 @@ pub fn create_router(state: AppState) -> Router {
         .route("/health", get(health_check))
         .merge(ws_app)
         .nest("/admin", htmx_app)
+        .nest("/api/i18n", create_i18n_routes())
         .nest_service(
             "/static",
             tower_http::services::ServeDir::new(static_dir),
         )
+        .layer(middleware::from_fn(language_middleware))
         .layer(middleware::from_fn(observability_middleware))
         .with_state(state)
 }

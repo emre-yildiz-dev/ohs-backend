@@ -1,0 +1,115 @@
+# Common Messages
+app-name = OHS Management System
+app-description = Multi-tenant Occupational Health and Safety Management System
+
+# Authentication
+welcome = Welcome
+login = Log In
+logout = Log Out
+register = Register
+email = Email
+password = Password
+username = Username
+forgot-password = Forgot Password
+remember-me = Remember Me
+
+# Error Messages
+error-generic = An error occurred
+error-validation = Validation error
+error-unauthorized = Unauthorized access
+error-forbidden = Access denied
+error-not-found = Not found
+error-server = Server error
+error-network = Network connection error
+error-timeout = Timeout
+
+# Success Messages
+success-created = Successfully created
+success-updated = Successfully updated
+success-deleted = Successfully deleted
+success-saved = Successfully saved
+
+# Actions
+create = Create
+edit = Edit
+delete = Delete
+save = Save
+cancel = Cancel
+confirm = Confirm
+submit = Submit
+search = Search
+filter = Filter
+export = Export
+import = Import
+
+# Navigation
+home = Home
+dashboard = Dashboard
+settings = Settings
+profile = Profile
+admin = Administration
+reports = Reports
+
+# Date and Time
+date = Date
+time = Time
+created-at = Created At
+updated-at = Updated At
+today = Today
+yesterday = Yesterday
+tomorrow = Tomorrow
+
+# Status
+status = Status
+active = Active
+inactive = Inactive
+pending = Pending
+approved = Approved
+rejected = Rejected
+completed = Completed
+
+# OHS Specific Terms
+training = Training
+appointment = Appointment
+notification = Notification
+tenant = Organization
+user = User
+report = Report
+safety = Safety
+health = Health
+occupational = Occupational
+incident = Incident
+risk-assessment = Risk Assessment
+safety-meeting = Safety Meeting
+personal-protective-equipment = Personal Protective Equipment
+
+# Forms
+required-field = This field is required
+optional-field = This field is optional
+invalid-format = Invalid format
+field-too-short = Field is too short
+field-too-long = Field is too long
+
+# User Interface
+loading = Loading...
+no-data = No data found
+page-not-found = Page not found
+go-back = Go Back
+next = Next
+previous = Previous
+page = Page
+of = of
+
+# File Operations
+upload = Upload
+download = Download
+file = File
+image = Image
+document = Document
+attachment = Attachment
+
+# Email
+email-sent = Email sent
+email-verified = Email verified
+verification-email = Verification email
+reset-password-email = Password reset email 
