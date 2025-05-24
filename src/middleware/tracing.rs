@@ -13,6 +13,7 @@ use std::time::Instant;
 use tracing::{info_span, Instrument};
 
 /// OpenTelemetry tracing middleware for HTTP requests
+#[allow(dead_code)]
 pub async fn otel_tracing_middleware(
     request: Request,
     next: Next,
@@ -93,6 +94,7 @@ pub async fn otel_tracing_middleware(
 }
 
 /// Metrics middleware for collecting HTTP metrics
+#[allow(dead_code)]
 pub async fn metrics_middleware(
     request: Request,
     next: Next,
