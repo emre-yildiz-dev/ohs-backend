@@ -1,5 +1,6 @@
 use axum::{middleware, routing::get, Json, Router};
 use serde_json::json;
+use tower_http::services::ServeDir;
 
 use crate::{
     app_state::AppState,
@@ -17,6 +18,8 @@ pub fn create_router(state: AppState) -> Router {
     let htmx_app = admin_routes();
 
     let static_dir = state.env.app.static_dir.to_string();
+    
+    let static_service = ServeDir::new(&static_dir);
 
     Router::new()
         .route("/", get(hello))
@@ -24,13 +27,10 @@ pub fn create_router(state: AppState) -> Router {
         .merge(ws_app)
         .nest("/admin", htmx_app)
         .nest("/i18n", create_i18n_routes())
-        .nest_service(
-            "/static",
-            tower_http::services::ServeDir::new(static_dir),
-        )
         .layer(middleware::from_fn(language_middleware))
         .layer(middleware::from_fn(observability_middleware))
         .with_state(state)
+        .nest_service("/static", static_service)
 }
 
 async fn hello() -> &'static str {
