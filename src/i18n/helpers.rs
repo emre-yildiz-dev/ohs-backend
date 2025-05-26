@@ -1,12 +1,12 @@
 use axum::{
     extract::FromRequestParts,
-    http::{request::Parts, StatusCode},
+    http::{StatusCode, request::Parts},
 };
 use fluent_bundle::FluentValue;
 use std::collections::HashMap;
 
 use crate::app_state::AppState;
-use crate::i18n::{Localizer, LocalizedString, SupportedLanguage};
+use crate::i18n::{LocalizedString, Localizer, SupportedLanguage};
 
 /// Extractor for getting localized messages in handlers
 pub struct I18n {
@@ -43,22 +43,21 @@ impl I18n {
 impl FromRequestParts<AppState> for I18n {
     type Rejection = StatusCode;
 
-    fn from_request_parts(
+    async fn from_request_parts(
         parts: &mut Parts,
         state: &AppState,
-    ) -> impl std::future::Future<Output = Result<Self, Self::Rejection>> + Send {
-        async move {
-            // Extract language directly from extensions
-            let language = parts.extensions
-                .get::<SupportedLanguage>()
-                .copied()
-                .unwrap_or(SupportedLanguage::default());
+    ) -> Result<Self, Self::Rejection> {
+        // Extract language directly from extensions
+        let language = parts
+            .extensions
+            .get::<SupportedLanguage>()
+            .copied()
+            .unwrap_or(SupportedLanguage::default());
 
-            Ok(I18n {
-                localizer: state.localizer.clone(),
-                language,
-            })
-        }
+        Ok(I18n {
+            localizer: state.localizer.clone(),
+            language,
+        })
     }
 }
 
@@ -72,4 +71,4 @@ macro_rules! i18n_args {
         )*
         args
     }};
-} 
+}
