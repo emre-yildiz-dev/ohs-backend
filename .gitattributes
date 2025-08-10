@@ -1,0 +1,9 @@
+# Mark generated CSS as vendored so GitHub doesn't count it in language statistics
+static/css/main.css linguist-vendored
+static/css/*.css linguist-vendored
+
+# Explicitly mark Rust files
+*.rs linguist-language=Rust
+
+# Mark SQL migrations as SQL
+migrations/*.sql linguist-language=SQL
